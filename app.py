@@ -5,8 +5,13 @@ from collections import Counter
 from pathlib import Path
 import shutil
 import requests
-from wordcloud import WordCloud
 import plotly.express as px
+
+try:
+    from wordcloud import WordCloud
+except ImportError:
+    st.error("无法导入 WordCloud 包，请检查依赖安装")
+    st.stop()
 
 try:
     import jieba

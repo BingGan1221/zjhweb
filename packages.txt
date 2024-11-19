@@ -1,5 +1,6 @@
-python3-dev
+python3.9-dev
 build-essential
 libfreetype6-dev
 libpng-dev
-libffi-dev 
+libffi-dev
+python3.9-distutils 
