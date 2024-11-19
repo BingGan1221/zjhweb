@@ -320,6 +320,16 @@ def main():
                     
         except Exception as e:
             st.error(f"处理文件时出错: {str(e)}")
+    
+    # 添加设计者标识
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='text-align: center; color: #95A5A6; padding: 1rem; margin-top: 2rem; border-top: 1px solid #E5E7E9;'>
+        <p style='font-size: 0.9rem; margin: 0;'>
+            🎨 Designed with ❤️ by 小羊
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
