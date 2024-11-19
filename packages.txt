@@ -1,6 +1,5 @@
-python-dev-tools
-build-essential
 python3-dev
+build-essential
 libfreetype6-dev
 libpng-dev
 libffi-dev 
