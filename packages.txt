@@ -3,3 +3,5 @@ build-essential
 libfreetype6-dev
 libpng-dev
 libffi-dev
+python3-setuptools
+python3-wheel
