@@ -1,4 +1,12 @@
 import streamlit as st
+
+# 设置页面配置必须是第一个 Streamlit 命令
+st.set_page_config(
+    page_title="Excel评论分析工具",
+    page_icon="📊",
+    layout="wide"
+)
+
 import sys
 import logging
 
@@ -40,18 +48,6 @@ except ImportError as e:
     logger.error(f"jieba 导入失败: {str(e)}")
     st.error("无法导入 jieba 包，请检查依赖安装")
     st.stop()
-
-# 设置页面配置
-try:
-    st.set_page_config(
-        page_title="Excel评论分析工具",
-        page_icon="📊",
-        layout="wide"
-    )
-    logger.info("页面配置设置成功")
-except Exception as e:
-    logger.error(f"页面配置设置失败: {str(e)}")
-    st.error(f"页面配置设置失败: {str(e)}")
 
 # 定义停用词列表
 STOP_WORDS = {
