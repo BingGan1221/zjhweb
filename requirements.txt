@@ -1,7 +1,9 @@
-streamlit==1.31.0
-pandas==2.2.0
 numpy==1.26.0
+pandas==2.2.0
+streamlit==1.31.0
 jieba==0.42.1
+pillow==10.2.0
+matplotlib==3.8.2
 wordcloud==1.9.2
 plotly==5.18.0
 requests==2.31.0
