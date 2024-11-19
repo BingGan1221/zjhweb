@@ -93,6 +93,10 @@ def ensure_font():
         st.error(f"获取字体文件失败: {str(e)}")
         return None
 
+def highlight_word(text, word):
+    """高亮显示文本中的关键词"""
+    return text.replace(word, f'**:red[{word}]**')
+
 def main():
     st.title("Excel评论分析工具")
     
@@ -191,7 +195,7 @@ def main():
                     if selected_word:
                         st.write(f"包含 '{selected_word}' 的评论：")
                         for comment in word_comments[selected_word]:
-                            st.write(f"- {comment}")
+                            st.markdown(highlight_word(comment, selected_word), unsafe_allow_html=True)
                 else:
                     st.info("没有找到有效的评论数据")
             
@@ -226,7 +230,7 @@ def main():
                     if selected_word:
                         st.write(f"包含 '{selected_word}' 的差评：")
                         for comment in word_comments_low[selected_word]:
-                            st.write(f"- {comment}")
+                            st.markdown(highlight_word(comment, selected_word), unsafe_allow_html=True)
                 else:
                     st.info("没有找到差评数据")
                     
