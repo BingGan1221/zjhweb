@@ -93,12 +93,9 @@ def ensure_font():
         st.error(f"获取字体文件失败: {str(e)}")
         return None
 
-def highlight_words(text, words):
-    """高亮显示文本中的多个关键词"""
-    result = text
-    for word in words:
-        result = result.replace(word, f'**:red[{word}]**')
-    return result
+def highlight_words(text, selected_word):
+    """只高亮选中的关键词"""
+    return text.replace(selected_word, f'**:red[{selected_word}]**')
 
 def main():
     st.title("Excel评论分析工具")
@@ -137,8 +134,8 @@ def main():
             
             word_freq = Counter()
             word_freq_low = Counter()
-            comment_words = {}  # 存储每条评论包含的所有高频词
-            comment_words_low = {}  # 存储每条差评包含的所有高频词
+            word_comments = {}  # 存储每个词对应的评论列表
+            word_comments_low = {}  # 存储每个词对应的差评列表
             
             for comment, score in zip(comments, scores):
                 if pd.isna(comment) or pd.isna(score):
@@ -149,7 +146,7 @@ def main():
                     continue
                 
                 words = jieba.cut(comment)
-                comment_high_freq_words = set()  # 当前评论包含的高频词
+                comment_words = set()  # 用于记录当前评论中的高频词
                 
                 for word in words:
                     word = word.strip()
@@ -158,14 +155,16 @@ def main():
                         not word.isdigit()):
                         
                         word_freq[word] += 1
+                        comment_words.add(word)
+                        if word not in word_comments:
+                            word_comments[word] = set()  # 使用集合避免重复
+                        word_comments[word].add(comment)
+                        
                         if score <= 3:
                             word_freq_low[word] += 1
-                        comment_high_freq_words.add(word)
-                
-                if comment_high_freq_words:
-                    comment_words[comment] = comment_high_freq_words
-                    if score <= 3:
-                        comment_words_low[comment] = comment_high_freq_words
+                            if word not in word_comments_low:
+                                word_comments_low[word] = set()  # 使用集合避免重复
+                            word_comments_low[word].add(comment)
             
             tab1, tab2 = st.tabs(["所有评论分析", "差评分析"])
             
@@ -198,15 +197,11 @@ def main():
                     
                     if selected_word:
                         st.write(f"包含 '{selected_word}' 的评论：")
-                        # 只显示包含所选词的评论，并高亮所有高频词
-                        relevant_comments = [
-                            (comment, words) 
-                            for comment, words in comment_words.items() 
-                            if selected_word in words
-                        ]
-                        for comment, words in relevant_comments:
-                            high_freq_words = [w for w in words if w in top_words]
-                            st.markdown(highlight_words(comment, high_freq_words), unsafe_allow_html=True)
+                        # 获取包含所选词的所有评��
+                        relevant_comments = word_comments.get(selected_word, set())
+                        for comment in relevant_comments:
+                            # 只高亮选中的词
+                            st.markdown(highlight_words(comment, selected_word), unsafe_allow_html=True)
                 else:
                     st.info("没有找到有效的评论数据")
             
@@ -240,15 +235,11 @@ def main():
                     
                     if selected_word:
                         st.write(f"包含 '{selected_word}' 的差评：")
-                        # 只显示包含所选词的差评，并高亮所有高频词
-                        relevant_comments = [
-                            (comment, words) 
-                            for comment, words in comment_words_low.items() 
-                            if selected_word in words
-                        ]
-                        for comment, words in relevant_comments:
-                            high_freq_words = [w for w in words if w in top_words]
-                            st.markdown(highlight_words(comment, high_freq_words), unsafe_allow_html=True)
+                        # 获取包含所选词的所有差评
+                        relevant_comments = word_comments_low.get(selected_word, set())
+                        for comment in relevant_comments:
+                            # 只高亮选中的词
+                            st.markdown(highlight_words(comment, selected_word), unsafe_allow_html=True)
                 else:
                     st.info("没有找到差评数据")
                     
