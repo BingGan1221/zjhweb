@@ -326,7 +326,7 @@ def main():
     st.markdown("""
     <div style='text-align: center; color: #95A5A6; padding: 1rem; margin-top: 2rem; border-top: 1px solid #E5E7E9;'>
         <p style='font-size: 0.9rem; margin: 0;'>
-            🎨 Designed with ❤️ by 小羊
+            🎨 Designed with 🐑 @小羊
         </p>
     </div>
     """, unsafe_allow_html=True)
