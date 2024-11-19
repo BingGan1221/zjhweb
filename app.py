@@ -1,30 +1,57 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from collections import Counter
-from pathlib import Path
-import shutil
-import requests
-import plotly.express as px
+import sys
+import logging
+
+# 设置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# 显示版本信息
+st.write(f"Python 版本: {sys.version}")
+logger.info(f"Python 版本: {sys.version}")
+
+try:
+    import pandas as pd
+    import numpy as np
+    from collections import Counter
+    from pathlib import Path
+    import shutil
+    import requests
+    import plotly.express as px
+    
+    logger.info("基础依赖包导入成功")
+except Exception as e:
+    logger.error(f"基础依赖包导入失败: {str(e)}")
+    st.error(f"基础依赖包导入失败: {str(e)}")
+    st.stop()
 
 try:
     from wordcloud import WordCloud
-except ImportError:
+    logger.info("WordCloud 导入成功")
+except ImportError as e:
+    logger.error(f"WordCloud 导入失败: {str(e)}")
     st.error("无法导入 WordCloud 包，请检查依赖安装")
     st.stop()
 
 try:
     import jieba
-except ImportError:
+    logger.info("jieba 导入成功")
+except ImportError as e:
+    logger.error(f"jieba 导入失败: {str(e)}")
     st.error("无法导入 jieba 包，请检查依赖安装")
     st.stop()
 
 # 设置页面配置
-st.set_page_config(
-    page_title="Excel评论分析工具",
-    page_icon="📊",
-    layout="wide"
-)
+try:
+    st.set_page_config(
+        page_title="Excel评论分析工具",
+        page_icon="📊",
+        layout="wide"
+    )
+    logger.info("页面配置设置成功")
+except Exception as e:
+    logger.error(f"页面配置设置失败: {str(e)}")
+    st.error(f"页面配置设置失败: {str(e)}")
 
 # 定义停用词列表
 STOP_WORDS = {
