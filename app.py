@@ -1,15 +1,10 @@
 import streamlit as st
-import pandas as pd
-import jieba
-from collections import Counter
-from wordcloud import WordCloud
-import plotly.express as px
-import numpy as np
-import os
-from datetime import datetime
-from pathlib import Path
-import requests
-import shutil
+
+try:
+    import jieba
+except ImportError:
+    st.error("无法导入 jieba 包，请检查依赖安装")
+    st.stop()
 
 # 设置页面配置
 st.set_page_config(
