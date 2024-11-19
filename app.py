@@ -98,13 +98,29 @@ def highlight_words(text, selected_word):
     return text.replace(selected_word, f'**:red[{selected_word}]**')
 
 def main():
-    st.title("Excel评论分析工具")
+    # 添加页面标题和说明
+    st.markdown("""
+    <h1 style='text-align: center; color: #2E86C1; margin-bottom: 2rem;'>
+        📊 Excel评论分析工具
+    </h1>
+    """, unsafe_allow_html=True)
     
-    font_path = ensure_font()
-    if not font_path:
-        st.error("无法加载中文字体文件，词云图可能无法正确显示中文。")
+    st.markdown("""
+    <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin-bottom: 2rem;'>
+        <h4 style='color: #2E86C1; margin-bottom: 0.5rem;'>使用说明：</h4>
+        <p>1. 上传Excel文件（支持.xlsx格式）</p>
+        <p>2. 系统会自动分析评论内容和评分</p>
+        <p>3. 查看词云图和词频统计</p>
+        <p>4. 选择关键词查看相关评论</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("上传Excel文件", type=['xlsx'])
+    # 文件上传部分美化
+    uploaded_file = st.file_uploader(
+        "选择Excel文件上传",
+        type=['xlsx'],
+        help="请上传包含评论数据的Excel文件（.xlsx格式）"
+    )
     
     if uploaded_file:
         try:
@@ -126,11 +142,23 @@ def main():
             total_comments = len(comments)
             low_score_comments = sum(1 for score in scores if score <= 3)
             
+            # 美化统计指标显示
+            st.markdown("<br>", unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("总评论数", total_comments)
+                st.markdown(f"""
+                <div style='background-color: #D4E6F1; padding: 1rem; border-radius: 10px; text-align: center;'>
+                    <h3 style='color: #2E86C1; margin: 0;'>总评论数</h3>
+                    <h2 style='color: #17202A; margin: 0.5rem 0;'>{total_comments}</h2>
+                </div>
+                """, unsafe_allow_html=True)
             with col2:
-                st.metric("差评数量", low_score_comments)
+                st.markdown(f"""
+                <div style='background-color: #FADBD8; padding: 1rem; border-radius: 10px; text-align: center;'>
+                    <h3 style='color: #E74C3C; margin: 0;'>差评数量</h3>
+                    <h2 style='color: #17202A; margin: 0.5rem 0;'>{low_score_comments}</h2>
+                </div>
+                """, unsafe_allow_html=True)
             
             word_freq = Counter()
             word_freq_low = Counter()
@@ -166,13 +194,16 @@ def main():
                                 word_comments_low[word] = set()  # 使用集合避免重复
                             word_comments_low[word].add(comment)
             
-            tab1, tab2 = st.tabs(["所有评论分析", "差评分析"])
+            # 美化标签页
+            tab1, tab2 = st.tabs(["📈 所有评论分析", "📉 差评分析"])
             
             with tab1:
                 if word_freq:
-                    st.subheader("词云图")
+                    st.markdown("""
+                    <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>词云图</h3>
+                    """, unsafe_allow_html=True)
                     wc = WordCloud(
-                        font_path=font_path,
+                        font_path=ensure_font(),
                         width=800,
                         height=400,
                         background_color='white',
@@ -181,35 +212,58 @@ def main():
                     wc.generate_from_frequencies(word_freq)
                     st.image(wc.to_array())
                     
-                    st.subheader("词频统计")
+                    st.markdown("""
+                    <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>词频统计</h3>
+                    """, unsafe_allow_html=True)
+                    # 美化词频图表
                     top_words = dict(sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:20])
                     fig = px.bar(
                         x=list(top_words.keys()),
                         y=list(top_words.values()),
-                        title="词频统计（前20个词）"
+                        title="词频统计（前20个词）",
+                        labels={'x': '关键词', 'y': '出现次数'},
+                        color_discrete_sequence=['#2E86C1']
                     )
-                    st.plotly_chart(fig)
+                    fig.update_layout(
+                        title_x=0.5,
+                        title_font_size=20,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
                     
+                    # 美化选择框和评论显示
+                    st.markdown("<br>", unsafe_allow_html=True)
                     selected_word = st.selectbox(
-                        "选择词语查看相关评论",
-                        options=list(top_words.keys())
+                        "选择关键词查看相关评论",
+                        options=list(top_words.keys()),
+                        help="选择一个关键词，查看包含该词的所有评论"
                     )
                     
                     if selected_word:
-                        st.write(f"包含 '{selected_word}' 的评论：")
-                        # 获取包含所选词的所有评��
+                        st.markdown(f"""
+                        <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
+                            <h4 style='color: #2E86C1; margin: 0;'>包含 "{selected_word}" 的评论：</h4>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
                         relevant_comments = word_comments.get(selected_word, set())
                         for comment in relevant_comments:
-                            # 只高亮选中的词
-                            st.markdown(highlight_words(comment, selected_word), unsafe_allow_html=True)
+                            st.markdown(f"""
+                            <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
+                                {highlight_words(comment, selected_word)}
+                            </div>
+                            """, unsafe_allow_html=True)
                 else:
                     st.info("没有找到有效的评论数据")
             
             with tab2:
                 if word_freq_low:
-                    st.subheader("差评词云图")
+                    st.markdown("""
+                    <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>差评词云图</h3>
+                    """, unsafe_allow_html=True)
                     wc = WordCloud(
-                        font_path=font_path,
+                        font_path=ensure_font(),
                         width=800,
                         height=400,
                         background_color='white',
@@ -218,28 +272,49 @@ def main():
                     wc.generate_from_frequencies(word_freq_low)
                     st.image(wc.to_array())
                     
-                    st.subheader("差评词频统计")
+                    st.markdown("""
+                    <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>差评词频统计</h3>
+                    """, unsafe_allow_html=True)
+                    # 美化词频图表
                     top_words = dict(sorted(word_freq_low.items(), key=lambda x: x[1], reverse=True)[:20])
                     fig = px.bar(
                         x=list(top_words.keys()),
                         y=list(top_words.values()),
-                        title="差评词频统计（前20个词）"
+                        title="差评词频统计（前20个词）",
+                        labels={'x': '关键词', 'y': '出现次数'},
+                        color_discrete_sequence=['#2E86C1']
                     )
-                    st.plotly_chart(fig)
+                    fig.update_layout(
+                        title_x=0.5,
+                        title_font_size=20,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
                     
+                    # 美化选择框和评论显示
+                    st.markdown("<br>", unsafe_allow_html=True)
                     selected_word = st.selectbox(
-                        "选择词语查看相关差评",
+                        "选择关键词查看相关差评",
                         options=list(top_words.keys()),
+                        help="选择一个关键词，查看包含该词的所有差评",
                         key="low_score_select"
                     )
                     
                     if selected_word:
-                        st.write(f"包含 '{selected_word}' 的差评：")
-                        # 获取包含所选词的所有差评
+                        st.markdown(f"""
+                        <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
+                            <h4 style='color: #2E86C1; margin: 0;'>包含 "{selected_word}" 的差评：</h4>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
                         relevant_comments = word_comments_low.get(selected_word, set())
                         for comment in relevant_comments:
-                            # 只高亮选中的词
-                            st.markdown(highlight_words(comment, selected_word), unsafe_allow_html=True)
+                            st.markdown(f"""
+                            <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
+                                {highlight_words(comment, selected_word)}
+                            </div>
+                            """, unsafe_allow_html=True)
                 else:
                     st.info("没有找到差评数据")
                     
