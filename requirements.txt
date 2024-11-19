@@ -2,4 +2,7 @@ streamlit==1.31.0
 pandas==2.2.0
 numpy==1.26.0
 jieba==0.42.1
+wordcloud==1.9.2
+plotly==5.18.0
+requests==2.31.0
 # 添加其他需要的包
