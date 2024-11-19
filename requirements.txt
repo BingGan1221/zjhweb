@@ -9,3 +9,4 @@ requests==2.31.0
 wordcloud==1.9.3
 setuptools==69.1.1
 wheel==0.42.0
+openpyxl==3.1.2
