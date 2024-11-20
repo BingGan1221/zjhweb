@@ -247,11 +247,19 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
+                        # 获取评论并去重
                         relevant_comments = word_comments.get(selected_word, set())
+                        # 将评论内容规范化（去除空格、换行等）后再去重
+                        normalized_comments = {}
                         for comment in relevant_comments:
+                            normalized = ' '.join(comment.split())  # 规范化空白字符
+                            normalized_comments[normalized] = comment  # 使用原始评论作为值
+                        
+                        # 显示去重后的评论
+                        for original_comment in normalized_comments.values():
                             st.markdown(f"""
                             <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
-                                {highlight_words(comment, selected_word)}
+                                {highlight_words(original_comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
                 else:
@@ -308,11 +316,19 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
+                        # 获取差评并去重
                         relevant_comments = word_comments_low.get(selected_word, set())
+                        # 将评论内容规范化（去除空格、换行等）后再去重
+                        normalized_comments = {}
                         for comment in relevant_comments:
+                            normalized = ' '.join(comment.split())  # 规范化空白字符
+                            normalized_comments[normalized] = comment  # 使用原始评论作为值
+                        
+                        # 显示去重后的评论
+                        for original_comment in normalized_comments.values():
                             st.markdown(f"""
                             <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
-                                {highlight_words(comment, selected_word)}
+                                {highlight_words(original_comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
                 else:
