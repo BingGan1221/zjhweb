@@ -97,6 +97,19 @@ def highlight_words(text, selected_word):
     """只高亮选中的关键词"""
     return text.replace(selected_word, f'**:red[{selected_word}]**')
 
+def get_most_complete_comment(comments):
+    """从相似评论中选择最长的一条（通常是最完整的）"""
+    normalized_comments = {}
+    for comment in comments:
+        normalized = ' '.join(comment.split())  # 规范化空白字符
+        # 如果已存在相似评论，保留较长的那个
+        if normalized in normalized_comments:
+            if len(comment) > len(normalized_comments[normalized]):
+                normalized_comments[normalized] = comment
+        else:
+            normalized_comments[normalized] = comment
+    return list(normalized_comments.values())
+
 def main():
     # 添加页面标题和说明
     st.markdown("""
@@ -247,19 +260,15 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # 获取评论并去重
+                        # 获取评论并保留最完整的版本
                         relevant_comments = word_comments.get(selected_word, set())
-                        # 将评论内容规范化（去除空格、换行等）后再去重
-                        normalized_comments = {}
-                        for comment in relevant_comments:
-                            normalized = ' '.join(comment.split())  # 规范化空白字符
-                            normalized_comments[normalized] = comment  # 使用原始评论作为值
+                        unique_comments = get_most_complete_comment(relevant_comments)
                         
                         # 显示去重后的评论
-                        for original_comment in normalized_comments.values():
+                        for comment in unique_comments:
                             st.markdown(f"""
                             <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
-                                {highlight_words(original_comment, selected_word)}
+                                {highlight_words(comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
                 else:
