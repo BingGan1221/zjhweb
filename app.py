@@ -37,7 +37,7 @@ STOP_WORDS = {
 
 # 建议相关词汇
 SUGGESTION_WORDS = {
-    '议', '觉得', '希望', '调整', '换', '改', '改进', '完善',
+    '议', '觉得', '希望', '调', '换', '改', '改进', '完善',
     '优化', '提议', '期望', '最好', '应该', '不如', '要是',
     '可以', '或许', '建议', '推荐', '提醒'
 }
@@ -261,6 +261,8 @@ def render_header():
     """, unsafe_allow_html=True)
     
     # 在 render_header 函数中，使用说明之前添加系统公告
+    image_url = "https://raw.githubusercontent.com/你的用户名/仓库名/main/feedback.png"
+
     st.markdown("""
     <div style='background: linear-gradient(135deg, #EBF5FB, #D6EAF8); padding: 1rem; border-radius: 8px; 
          margin-bottom: 1.5rem; border: 1px solid #2E86C1;'>
@@ -269,13 +271,22 @@ def render_header():
         </h4>
         <div style='color: #2E86C1; font-size: 0.9rem; line-height: 1.5;'>
             <p style='margin: 0 0 0.5rem 0;'>更新内容：</p>
-            <ul style='margin: 0; padding-left: 1.5rem;'>
+            <ul style='margin: 0 0 1rem 1.5rem;'>
                 <li>全新界面设计，优化用户体验</li>
                 <li>新增筛选框固定显示功能</li>
                 <li>优化筛选条件布局和样式</li>
                 <li>简化操作流程，提升使用效率</li>
                 <li>删除多余的白色框和合并分析功能</li>
             </ul>
+            <div style='background: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem;'>
+                <p style='margin: 0; color: #2E86C1;'>
+                    💡 特别感谢：感谢铭浩提出的宝贵建议，帮助我们实现了多文件上传功能！
+                </p>
+                <p style='margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem; font-style: italic; 
+                    padding: 0.5rem; background: #F8F9FA; border-radius: 4px;'>
+                    "一次只能上传一份，能否同时上传多份文档"
+                </p>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -393,7 +404,7 @@ def main():
                 # 查找路线列
                 route_col = None
                 for col in df.columns:
-                    if '路线名称' in str(col) or '产品名称' in str(col):
+                    if '路��名称' in str(col) or '产品名称' in str(col):
                         route_col = col
                         routes = df[route_col].dropna().unique()
                         with col2:
