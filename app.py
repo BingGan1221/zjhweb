@@ -112,105 +112,47 @@ def get_most_complete_comment(comments):
     return list(normalized_comments.values())
 
 def main():
-    # 在页面开头添加自定义 CSS
-    st.markdown("""
-    <style>
-        /* 全局样式 */
-        .main {
-            padding: 2rem;
-        }
-        
-        /* 标签页按钮样式 */
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 30px;
-            padding: 1rem;
-            background-color: #F5F7FA;
-            border-radius: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-            margin-bottom: 2rem;
-        }
-        
-        .stTabs [data-baseweb="tab"] {
-            height: 60px;
-            padding: 0 30px;
-            background-color: white;
-            border-radius: 12px;
-            color: #1976D2;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .stTabs [data-baseweb="tab"]:hover {
-            background-color: #E3F2FD;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #1976D2, #2196F3) !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(25,118,210,0.3) !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    # 加载自定义CSS
+    with open('.streamlit/style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
     
-    # 添加页面标题和说明
+    # 页面标题
     st.markdown("""
-    <div style='text-align: center; padding: 3rem 0; background: linear-gradient(135deg, #1976D2, #2196F3); 
-         border-radius: 20px; margin: 1rem 0 3rem 0; box-shadow: 0 4px 20px rgba(25,118,210,0.2);'>
-        <h1 style='color: white; margin-bottom: 1.5rem; font-size: 2.8rem; font-weight: 600;'>
-            📊 Excel评论分析工具
-        </h1>
-        <p style='color: white; opacity: 0.95; font-size: 1.3rem; max-width: 700px; margin: 0 auto;'>
-            快速分析和可视化您的评论数据
-        </p>
+    <div class="title-container">
+        <h1 class="title-text">📊 Excel评论分析工具</h1>
+        <p class="subtitle-text">快速分析和可视化您的评论数据</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 使用说明卡片
+    # 使用指南部分
     st.markdown("""
-    <div style='background-color: #F5F7FA; padding: 2rem; border-radius: 20px; margin-bottom: 3rem; 
-         box-shadow: 0 4px 20px rgba(0,0,0,0.05);'>
-        <h4 style='color: #1976D2; margin-bottom: 1.5rem; font-size: 1.3rem;'>
-            <i>📝 使用指南</i>
-        </h4>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;'>
-            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
-                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
-                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>1. 上传Excel文件（.xlsx格式）</p>
+    <div class="guide-container">
+        <h4 class="guide-title">📝 使用指南</h4>
+        <div class="guide-grid">
+            <div class="guide-item">
+                <p>1. 上传Excel文件（.xlsx格式）</p>
             </div>
-            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
-                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
-                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>2. 系统自动分析评论内容和评分</p>
+            <div class="guide-item">
+                <p>2. 系统自动分析评论内容和评分</p>
             </div>
-            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
-                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
-                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>3. 查看词云图和词频统计</p>
+            <div class="guide-item">
+                <p>3. 查看词云图和词频统计</p>
             </div>
-            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
-                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
-                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>4. 选择关键词查看相关评论</p>
+            <div class="guide-item">
+                <p>4. 选择关键词查看相关评论</p>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # 文件上传区域美化
-    st.markdown("""
-    <div style='background-color: #F8F9FA; padding: 2rem; border-radius: 10px; border: 2px dashed #1E88E5; text-align: center; margin-bottom: 2rem;'>
-    """, unsafe_allow_html=True)
-    
+    # 文件上传区域
+    st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
         "选择Excel文件上传",
         type=['xlsx'],
         help="请上传包含评论数据的Excel文件（.xlsx格式）"
     )
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     if uploaded_file:
         try:
@@ -232,23 +174,19 @@ def main():
             total_comments = len(comments)
             low_score_comments = sum(1 for score in scores if score <= 3)
             
-            # 美化统计指标显示
-            st.markdown("<br>", unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #1E88E5, #64B5F6); padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-                    <h3 style='color: white; margin: 0; font-size: 1.1rem; opacity: 0.9;'>总评论数</h3>
-                    <h2 style='color: white; margin: 0.5rem 0; font-size: 2rem;'>{total_comments}</h2>
+            # 统计指标显示
+            st.markdown("""
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>总评论数</h3>
+                    <h2>{total_comments}</h2>
                 </div>
-                """, unsafe_allow_html=True)
-            with col2:
-                st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #EF5350, #E57373); padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-                    <h3 style='color: white; margin: 0; font-size: 1.1rem; opacity: 0.9;'>差评数量</h3>
-                    <h2 style='color: white; margin: 0.5rem 0; font-size: 2rem;'>{low_score_comments}</h2>
+                <div class="stat-card stat-card-red">
+                    <h3>差评数量</h3>
+                    <h2>{low_score_comments}</h2>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
             
             word_freq = Counter()
             word_freq_low = Counter()
@@ -284,13 +222,18 @@ def main():
                                 word_comments_low[word] = set()  # 使用集合避免重复
                             word_comments_low[word].add(comment)
             
-            # 修改标签页的显示
-            tab1, tab2 = st.tabs([
-                "📈  所有评论分析  ",  # 添加额外的空格使文本居中
-                "📉  差评分析  "
-            ])
-            
-            with tab1:
+            # 词云分析部分
+            if word_freq:
+                st.markdown("""
+                <div class="analysis-section">
+                    <h3 class="section-title">词云分析</h3>
+                    <div class="wordcloud-container">
+                        <!-- 词云图将在这里显示 -->
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 词云图生成代码
                 if word_freq:
                     st.markdown("""
                     <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>词云图</h3>
@@ -334,9 +277,10 @@ def main():
                     )
                     
                     if selected_word:
-                        st.markdown(f"""
-                        <div style='background: linear-gradient(to right, #1E88E5, #64B5F6); padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
-                            <h4 style='color: white; margin: 0;'>包含 "{selected_word}" 的评论：</h4>
+                        st.markdown("""
+                        <div class="comment-list">
+                            <h4>包含 "{selected_word}" 的评论：</h4>
+                            <!-- 评论将在这里显示 -->
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -347,14 +291,25 @@ def main():
                         # 显示去重后的评论
                         for comment in unique_comments:
                             st.markdown(f"""
-                            <div style='background-color: white; padding: 1.5rem; border-radius: 8px; margin: 0.8rem 0; border: 1px solid #E0E0E0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>
+                            <div class="comment-item">
                                 {highlight_words(comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
-                else:
-                    st.info("没有找到有效的评论数据")
+            else:
+                st.info("没有找到有效的评论数据")
             
-            with tab2:
+            # 差评分析部分
+            if word_freq_low:
+                st.markdown("""
+                <div class="analysis-section">
+                    <h3 class="section-title">差评分析</h3>
+                    <div class="wordcloud-container">
+                        <!-- 差评词云图将在这里显示 -->
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 差评词云图生成代码
                 if word_freq_low:
                     st.markdown("""
                     <h3 style='color: #2E86C1; margin: 2rem 0 1rem 0;'>差评词云图</h3>
@@ -399,9 +354,10 @@ def main():
                     )
                     
                     if selected_word:
-                        st.markdown(f"""
-                        <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
-                            <h4 style='color: #2E86C1; margin: 0;'>包含 "{selected_word}" 的差评：</h4>
+                        st.markdown("""
+                        <div class="comment-list">
+                            <h4>包含 "{selected_word}" 的差评：</h4>
+                            <!-- 差评将在这里显示 -->
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -416,7 +372,7 @@ def main():
                         # 显示去重后的评论
                         for original_comment in normalized_comments.values():
                             st.markdown(f"""
-                            <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
+                            <div class="comment-item">
                                 {highlight_words(original_comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
@@ -426,13 +382,10 @@ def main():
         except Exception as e:
             st.error(f"处理文件时出错: {str(e)}")
     
-    # 添加设计者标识
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    # 页脚
     st.markdown("""
-    <div style='text-align: center; padding: 2rem; margin-top: 2rem; background: linear-gradient(to right, #F8F9FA, #FFFFFF, #F8F9FA);'>
-        <p style='color: #757575; font-size: 0.9rem; margin: 0;'>
-            🎨 Designed with 🐑 @小羊
-        </p>
+    <div class="footer">
+        <p>🎨 Designed with 🐑 @小羊</p>
     </div>
     """, unsafe_allow_html=True)
 
