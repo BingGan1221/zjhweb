@@ -51,7 +51,7 @@ NEGATIVE_WORDS = {
 }
 
 # 在文件开头添加版本常量
-VERSION = "1.0.0"  # 当前版本号
+VERSION = "2.0.0"  # 更新版本号
 
 # 工具函数
 def ensure_font():
@@ -256,6 +256,26 @@ def render_header():
                  border-left: 3px solid #2E86C1; flex: 1; min-width: 200px;'>
                 <p style='margin: 0; color: #2E86C1;'>📊 查看分析结果</p>
             </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 在 render_header 函数中，使用说明之前添加系统公告
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #EBF5FB, #D6EAF8); padding: 1rem; border-radius: 8px; 
+         margin-bottom: 1.5rem; border: 1px solid #2E86C1;'>
+        <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem; display: flex; align-items: center;'>
+            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.0.0
+        </h4>
+        <div style='color: #2E86C1; font-size: 0.9rem; line-height: 1.5;'>
+            <p style='margin: 0 0 0.5rem 0;'>更新内容：</p>
+            <ul style='margin: 0; padding-left: 1.5rem;'>
+                <li>全新界面设计，优化用户体验</li>
+                <li>新增筛选框固定显示功能</li>
+                <li>优化筛选条件布局和样式</li>
+                <li>简化操作流程，提升使用效率</li>
+                <li>删除多余的白色框和合并分析功能</li>
+            </ul>
         </div>
     </div>
     """, unsafe_allow_html=True)
