@@ -94,7 +94,10 @@ def ensure_font():
         return None
 
 def highlight_words(text, selected_word):
-    """只高亮选中的关键词"""
+    """只高亮选中的关键词，处理已有的 Markdown 格式"""
+    # 先移除可能已存在的高亮标记
+    text = text.replace('**:red[', '').replace(']**', '')
+    # 添加新的高亮标记
     return text.replace(selected_word, f'**:red[{selected_word}]**')
 
 def get_most_complete_comment(comments):
