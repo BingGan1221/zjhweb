@@ -114,27 +114,51 @@ def get_most_complete_comment(comments):
 def main():
     # 添加页面标题和说明
     st.markdown("""
-    <h1 style='text-align: center; color: #2E86C1; margin-bottom: 2rem;'>
-        📊 Excel评论分析工具
-    </h1>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin-bottom: 2rem;'>
-        <h4 style='color: #2E86C1; margin-bottom: 0.5rem;'>使用说明：</h4>
-        <p>1. 上传Excel文件（支持.xlsx格式）</p>
-        <p>2. 系统会自动分析评论内容和评分</p>
-        <p>3. 查看词云图和词频统计</p>
-        <p>4. 选择关键词查看相关评论</p>
+    <div style='text-align: center; padding: 2rem 0; background: linear-gradient(to right, #1E88E5, #64B5F6); border-radius: 10px; margin-bottom: 2rem;'>
+        <h1 style='color: white; margin-bottom: 1rem;'>
+            📊 Excel评论分析工具
+        </h1>
+        <p style='color: white; opacity: 0.9; font-size: 1.1rem;'>
+            快速分析和可视化您的评论数据
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 文件上传部分美化
+    # 使用说明卡片
+    st.markdown("""
+    <div style='background-color: #F8F9FA; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+        <h4 style='color: #1E88E5; margin-bottom: 1rem; font-size: 1.2rem;'>
+            <i>📝 使用指南</i>
+        </h4>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;'>
+            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
+                <p style='margin: 0; color: #424242;'>1. 上传Excel文件（.xlsx格式）</p>
+            </div>
+            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
+                <p style='margin: 0; color: #424242;'>2. 系统自动分析评论内容和评分</p>
+            </div>
+            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
+                <p style='margin: 0; color: #424242;'>3. 查看词云图和词频统计</p>
+            </div>
+            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
+                <p style='margin: 0; color: #424242;'>4. 选择关键词查看相关评论</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 文件上传区域美化
+    st.markdown("""
+    <div style='background-color: #F8F9FA; padding: 2rem; border-radius: 10px; border: 2px dashed #1E88E5; text-align: center; margin-bottom: 2rem;'>
+    """, unsafe_allow_html=True)
+    
     uploaded_file = st.file_uploader(
         "选择Excel文件上传",
         type=['xlsx'],
         help="请上传包含评论数据的Excel文件（.xlsx格式）"
     )
+    
+    st.markdown("</div>", unsafe_allow_html=True)
     
     if uploaded_file:
         try:
@@ -161,16 +185,16 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown(f"""
-                <div style='background-color: #D4E6F1; padding: 1rem; border-radius: 10px; text-align: center;'>
-                    <h3 style='color: #2E86C1; margin: 0;'>总评论数</h3>
-                    <h2 style='color: #17202A; margin: 0.5rem 0;'>{total_comments}</h2>
+                <div style='background: linear-gradient(135deg, #1E88E5, #64B5F6); padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    <h3 style='color: white; margin: 0; font-size: 1.1rem; opacity: 0.9;'>总评论数</h3>
+                    <h2 style='color: white; margin: 0.5rem 0; font-size: 2rem;'>{total_comments}</h2>
                 </div>
                 """, unsafe_allow_html=True)
             with col2:
                 st.markdown(f"""
-                <div style='background-color: #FADBD8; padding: 1rem; border-radius: 10px; text-align: center;'>
-                    <h3 style='color: #E74C3C; margin: 0;'>差评数量</h3>
-                    <h2 style='color: #17202A; margin: 0.5rem 0;'>{low_score_comments}</h2>
+                <div style='background: linear-gradient(135deg, #EF5350, #E57373); padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    <h3 style='color: white; margin: 0; font-size: 1.1rem; opacity: 0.9;'>差评数量</h3>
+                    <h2 style='color: white; margin: 0.5rem 0; font-size: 2rem;'>{low_score_comments}</h2>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -256,8 +280,8 @@ def main():
                     
                     if selected_word:
                         st.markdown(f"""
-                        <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
-                            <h4 style='color: #2E86C1; margin: 0;'>包含 "{selected_word}" 的评论：</h4>
+                        <div style='background: linear-gradient(to right, #1E88E5, #64B5F6); padding: 1rem; border-radius: 10px; margin: 1rem 0;'>
+                            <h4 style='color: white; margin: 0;'>包含 "{selected_word}" 的评论：</h4>
                         </div>
                         """, unsafe_allow_html=True)
                         
@@ -268,7 +292,7 @@ def main():
                         # 显示去重后的评论
                         for comment in unique_comments:
                             st.markdown(f"""
-                            <div style='background-color: #FFFFFF; padding: 1rem; border-radius: 5px; margin: 0.5rem 0; border: 1px solid #D4E6F1;'>
+                            <div style='background-color: white; padding: 1.5rem; border-radius: 8px; margin: 0.8rem 0; border: 1px solid #E0E0E0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>
                                 {highlight_words(comment, selected_word)}
                             </div>
                             """, unsafe_allow_html=True)
@@ -350,8 +374,8 @@ def main():
     # 添加设计者标识
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("""
-    <div style='text-align: center; color: #95A5A6; padding: 1rem; margin-top: 2rem; border-top: 1px solid #E5E7E9;'>
-        <p style='font-size: 0.9rem; margin: 0;'>
+    <div style='text-align: center; padding: 2rem; margin-top: 2rem; background: linear-gradient(to right, #F8F9FA, #FFFFFF, #F8F9FA);'>
+        <p style='color: #757575; font-size: 0.9rem; margin: 0;'>
             🎨 Designed with 🐑 @小羊
         </p>
     </div>
