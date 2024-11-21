@@ -1,8 +1,39 @@
+# Python
 __pycache__/
-*.pyc
-.env
-.venv
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
 venv/
+ENV/
+
+# IDE
 .idea/
 .vscode/
-*.log
+*.swp
+*.swo
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Project specific
+*.xlsx
+*.xls
+!tests/test_data.xlsx

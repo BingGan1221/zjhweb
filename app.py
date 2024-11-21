@@ -35,6 +35,21 @@ STOP_WORDS = {
     '虽然', '这样', '这些', '那些', '如此', '只是', '真的', '一个',
 }
 
+# 建议相关词汇
+SUGGESTION_WORDS = {
+    '建议', '觉得', '希望', '调整', '换', '改', '改进', '完善',
+    '优化', '提议', '期望', '最好', '应该', '不如', '要是',
+    '可以', '或许', '建议', '推荐', '提醒'
+}
+
+# 负面情绪词汇
+NEGATIVE_WORDS = {
+    '累', '无聊', '难受', '差', '糟糕', '失望', '不满', '不好',
+    '不行', '垃圾', '烦', '恶心', '坑', '不值', '贵', '慢',
+    '差劲', '敷衍', '态度差', '脏', '乱', '吵', '挤', '冷',
+    '热', '差评', '退款', '投诉', '举报', '骗', '坑'
+}
+
 # 在文件开头添加版本常量
 VERSION = "1.0.0"  # 当前版本号
 
@@ -322,6 +337,10 @@ def main():
             word_freq_low = Counter()
             word_comments = {}  # 存储每个词对应的论列表
             word_comments_low = {}  # 存储每个词对应的差评列表
+            suggestion_freq = Counter()  # 建议词频
+            negative_freq = Counter()    # 负面词频
+            suggestion_comments = {}     # 建议相关评论
+            negative_comments = {}       # 负面情绪评论
             
             for comment, score in zip(comments, scores):
                 if pd.isna(comment) or pd.isna(score):
@@ -351,11 +370,27 @@ def main():
                             if word not in word_comments_low:
                                 word_comments_low[word] = set()
                             word_comments_low[word].add(comment)
+                        
+                        # 添加建议词统计
+                        if word in SUGGESTION_WORDS:
+                            suggestion_freq[word] += 1
+                            if word not in suggestion_comments:
+                                suggestion_comments[word] = set()
+                            suggestion_comments[word].add(comment)
+                        
+                        # 添加负面词统计
+                        if word in NEGATIVE_WORDS:
+                            negative_freq[word] += 1
+                            if word not in negative_comments:
+                                negative_comments[word] = set()
+                            negative_comments[word].add(comment)
             
             # 修改标签页的显示
-            tab1, tab2 = st.tabs([
-                "📈  所有评论分析  ",  # 添加额外的空格使文本居中
-                "📉  差评分析  "
+            tab1, tab2, tab3, tab4 = st.tabs([
+                "📈  所有评论分析  ",
+                "📉  差评分析  ",
+                "💡  建议分析  ",
+                "😟  负面情绪分析  "
             ])
             
             with tab1:
@@ -438,6 +473,70 @@ def main():
                             )
                 else:
                     st.info("没有找到差评数据")
+            
+            # 添加建议分析标签页
+            with tab3:
+                if suggestion_freq:
+                    st.subheader("建议关键词统计")
+                    top_suggestions = dict(sorted(suggestion_freq.items(), key=lambda x: x[1], reverse=True)[:20])
+                    fig = px.bar(
+                        x=list(top_suggestions.keys()),
+                        y=list(top_suggestions.values()),
+                        labels={'x': '建议关键词', 'y': '出现次数'},
+                        title="建议关键词分布"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    selected_word = st.selectbox(
+                        "选择关键词查看相关建议",
+                        options=list(top_suggestions.keys()),
+                        key="suggestion_select"
+                    )
+                    
+                    if selected_word:
+                        st.subheader(f"包含 '{selected_word}' 的评论：")
+                        relevant_comments = suggestion_comments.get(selected_word, set())
+                        unique_comments = get_most_complete_comment(relevant_comments)
+                        
+                        for comment in unique_comments:
+                            st.markdown(
+                                highlight_words(comment, selected_word),
+                                unsafe_allow_html=True
+                            )
+                else:
+                    st.info("没有找到建议相关的评论")
+            
+            # 添加负面情绪分析标签页
+            with tab4:
+                if negative_freq:
+                    st.subheader("负面情绪词统计")
+                    top_negative = dict(sorted(negative_freq.items(), key=lambda x: x[1], reverse=True)[:20])
+                    fig = px.bar(
+                        x=list(top_negative.keys()),
+                        y=list(top_negative.values()),
+                        labels={'x': '负面情绪词', 'y': '出现次数'},
+                        title="负面情绪词分布"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    selected_word = st.selectbox(
+                        "选择关键词查看相关负面评论",
+                        options=list(top_negative.keys()),
+                        key="negative_select"
+                    )
+                    
+                    if selected_word:
+                        st.subheader(f"包含 '{selected_word}' 的评论：")
+                        relevant_comments = negative_comments.get(selected_word, set())
+                        unique_comments = get_most_complete_comment(relevant_comments)
+                        
+                        for comment in unique_comments:
+                            st.markdown(
+                                highlight_words(comment, selected_word),
+                                unsafe_allow_html=True
+                            )
+                else:
+                    st.info("没有找到负面情绪相关的评论")
                 
         except Exception as e:
             st.error(f"处理文件时出错: {str(e)}")
