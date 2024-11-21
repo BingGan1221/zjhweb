@@ -112,6 +112,42 @@ def get_most_complete_comment(comments):
     return list(normalized_comments.values())
 
 def main():
+    # 在页面开头添加自定义 CSS
+    st.markdown("""
+    <style>
+        /* 标签页按钮样式 */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 20px;
+            padding: 0.5rem;
+            background-color: #F8F9FA;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            height: 50px;
+            padding: 0 20px;
+            background-color: white;
+            border-radius: 8px;
+            color: #1E88E5;
+            font-weight: bold;
+            border: 2px solid #E3F2FD;
+            transition: all 0.3s ease;
+        }
+        
+        .stTabs [data-baseweb="tab"]:hover {
+            background-color: #E3F2FD;
+            border-color: #1E88E5;
+        }
+        
+        .stTabs [aria-selected="true"] {
+            background-color: #1E88E5 !important;
+            color: white !important;
+            border-color: #1E88E5 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # 添加页面标题和说明
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0; background: linear-gradient(to right, #1E88E5, #64B5F6); border-radius: 10px; margin-bottom: 2rem;'>
@@ -200,7 +236,7 @@ def main():
             
             word_freq = Counter()
             word_freq_low = Counter()
-            word_comments = {}  # 存储每个词对应的评论列表
+            word_comments = {}  # 存储每个词对应的��论列表
             word_comments_low = {}  # 存储每个词对应的差评列表
             
             for comment, score in zip(comments, scores):
@@ -229,11 +265,14 @@ def main():
                         if score <= 3:
                             word_freq_low[word] += 1
                             if word not in word_comments_low:
-                                word_comments_low[word] = set()  # 使用集合避免重复
+                                word_comments_low[word] = set()  # 使���集合避免重复
                             word_comments_low[word].add(comment)
             
-            # 美化标签页
-            tab1, tab2 = st.tabs(["📈 所有评论分析", "📉 差评分析"])
+            # 修改标签页的显示
+            tab1, tab2 = st.tabs([
+                "📈  所有评论分析  ",  # 添加额外的空格使文本居中
+                "📉  差评分析  "
+            ])
             
             with tab1:
                 if word_freq:
