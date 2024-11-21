@@ -115,46 +115,57 @@ def main():
     # 在页面开头添加自定义 CSS
     st.markdown("""
     <style>
+        /* 全局样式 */
+        .main {
+            padding: 2rem;
+        }
+        
         /* 标签页按钮样式 */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 20px;
-            padding: 0.5rem;
-            background-color: #F8F9FA;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            gap: 30px;
+            padding: 1rem;
+            background-color: #F5F7FA;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            margin-bottom: 2rem;
         }
         
         .stTabs [data-baseweb="tab"] {
-            height: 50px;
-            padding: 0 20px;
+            height: 60px;
+            padding: 0 30px;
             background-color: white;
-            border-radius: 8px;
-            color: #1E88E5;
-            font-weight: bold;
-            border: 2px solid #E3F2FD;
+            border-radius: 12px;
+            color: #1976D2;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
         }
         
         .stTabs [data-baseweb="tab"]:hover {
             background-color: #E3F2FD;
-            border-color: #1E88E5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         .stTabs [aria-selected="true"] {
-            background-color: #1E88E5 !important;
+            background: linear-gradient(135deg, #1976D2, #2196F3) !important;
             color: white !important;
-            border-color: #1E88E5 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(25,118,210,0.3) !important;
         }
     </style>
     """, unsafe_allow_html=True)
     
     # 添加页面标题和说明
     st.markdown("""
-    <div style='text-align: center; padding: 2rem 0; background: linear-gradient(to right, #1E88E5, #64B5F6); border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin-bottom: 1rem;'>
+    <div style='text-align: center; padding: 3rem 0; background: linear-gradient(135deg, #1976D2, #2196F3); 
+         border-radius: 20px; margin: 1rem 0 3rem 0; box-shadow: 0 4px 20px rgba(25,118,210,0.2);'>
+        <h1 style='color: white; margin-bottom: 1.5rem; font-size: 2.8rem; font-weight: 600;'>
             📊 Excel评论分析工具
         </h1>
-        <p style='color: white; opacity: 0.9; font-size: 1.1rem;'>
+        <p style='color: white; opacity: 0.95; font-size: 1.3rem; max-width: 700px; margin: 0 auto;'>
             快速分析和可视化您的评论数据
         </p>
     </div>
@@ -162,22 +173,27 @@ def main():
     
     # 使用说明卡片
     st.markdown("""
-    <div style='background-color: #F8F9FA; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-        <h4 style='color: #1E88E5; margin-bottom: 1rem; font-size: 1.2rem;'>
+    <div style='background-color: #F5F7FA; padding: 2rem; border-radius: 20px; margin-bottom: 3rem; 
+         box-shadow: 0 4px 20px rgba(0,0,0,0.05);'>
+        <h4 style='color: #1976D2; margin-bottom: 1.5rem; font-size: 1.3rem;'>
             <i>📝 使用指南</i>
         </h4>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;'>
-            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
-                <p style='margin: 0; color: #424242;'>1. 上传Excel文件（.xlsx格式）</p>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;'>
+            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
+                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
+                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>1. 上传Excel文件（.xlsx格式）</p>
             </div>
-            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
-                <p style='margin: 0; color: #424242;'>2. 系统自动分析评论内容和评分</p>
+            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
+                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
+                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>2. 系统自动分析评论内容和评分</p>
             </div>
-            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
-                <p style='margin: 0; color: #424242;'>3. 查看词云图和词频统计</p>
+            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
+                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
+                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>3. 查看词云图和词频统计</p>
             </div>
-            <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #1E88E5;'>
-                <p style='margin: 0; color: #424242;'>4. 选择关键词查看相关评论</p>
+            <div style='background: white; padding: 1.5rem; border-radius: 15px; border-left: 5px solid #1976D2;
+                 box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease;'>
+                <p style='margin: 0; color: #1E1E1E; font-size: 1.1rem;'>4. 选择关键词查看相关评论</p>
             </div>
         </div>
     </div>
