@@ -236,7 +236,7 @@ def main():
             
             word_freq = Counter()
             word_freq_low = Counter()
-            word_comments = {}  # 存储每个词对应的��论列表
+            word_comments = {}  # 存储每个词对应的论列表
             word_comments_low = {}  # 存储每个词对应的差评列表
             
             for comment, score in zip(comments, scores):
@@ -265,7 +265,7 @@ def main():
                         if score <= 3:
                             word_freq_low[word] += 1
                             if word not in word_comments_low:
-                                word_comments_low[word] = set()  # 使���集合避免重复
+                                word_comments_low[word] = set()  # 使用集合避免重复
                             word_comments_low[word].add(comment)
             
             # 修改标签页的显示
