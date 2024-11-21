@@ -1,7 +1,14 @@
 streamlit
 pandas
 numpy
+<<<<<<< HEAD
 jieba
 wordcloud
 plotly
+=======
+plotly
+jieba
+wordcloud
+requests
+>>>>>>> new-version
 openpyxl

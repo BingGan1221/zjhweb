@@ -1,7 +1,8 @@
-venv/
-.env
 __pycache__/
 *.pyc
-.DS_Store
-fonts/
+.env
+.venv
+venv/
+.idea/
+.vscode/
 *.log
