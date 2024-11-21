@@ -94,11 +94,9 @@ def ensure_font():
         return None
 
 def highlight_words(text, selected_word):
-    """只高亮选中的关键词，处理已有的 Markdown 格式"""
-    # 先移除可能已存在的高亮标记
-    text = text.replace('**:red[', '').replace(']**', '')
-    # 添加新的高亮标记
-    return text.replace(selected_word, f'**:red[{selected_word}]**')
+    """只高亮选中的关键词"""
+    # 使用 HTML 标签而不是 Markdown
+    return text.replace(selected_word, f'<span style="color: red; font-weight: bold;">{selected_word}</span>')
 
 def get_most_complete_comment(comments):
     """从相似评论中选择最长的一条（通常是最完整的）"""
