@@ -91,12 +91,15 @@ def ensure_font():
         st.error(f"获取字体文件失败: {str(e)}")
         return None
 
-def highlight_words(text, selected_word):
-    """高亮显示选中的关键词"""
-    return text.replace(
+def highlight_words(text, selected_word, source=None):
+    """高亮显示选中的关键词，并添加来源标注"""
+    highlighted_text = text.replace(
         selected_word, 
         f'<span style="color: red; font-weight: bold;">{selected_word}</span>'
     )
+    if source:
+        highlighted_text += f'<div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">来源: {source}</div>'
+    return highlighted_text
 
 def get_most_complete_comment(comments):
     """从相似评论中选择最完整的一条"""
@@ -267,24 +270,24 @@ def render_header():
     <div style='background: linear-gradient(135deg, #EBF5FB, #D6EAF8); padding: 1rem; border-radius: 8px; 
          margin-bottom: 1.5rem; border: 1px solid #2E86C1;'>
         <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem; display: flex; align-items: center;'>
-            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.0.0
+            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.1.0
         </h4>
         <div style='color: #2E86C1; font-size: 0.9rem; line-height: 1.5;'>
             <p style='margin: 0 0 0.5rem 0;'>更新内容：</p>
             <ul style='margin: 0 0 1rem 1.5rem;'>
-                <li>全新界面设计，优化用户体验</li>
-                <li>新增筛选框固定显示功能</li>
-                <li>优化筛选条件布局和样式</li>
-                <li>简化操作流程，提升使用效率</li>
-                <li>删除多余的白色框和合并分析功能</li>
+                <li>✨ <strong>新增多文件合并分析功能</strong></li>
+                <li>📊 新增数据来源分布统计</li>
+                <li>🔍 优化多文件筛选体验</li>
+                <li>📈 改进数据分析展示效果</li>
+                <li>🐛 修复已知问题，提升稳定性</li>
             </ul>
             <div style='background: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem;'>
                 <p style='margin: 0; color: #2E86C1;'>
-                    💡 特别感谢：感谢铭浩提出的宝贵建议，帮助我们实现了多文件上传功能！
+                    💡 使用提示：现在可以同时选择多个文件进行合并分析，系统会自动整合所有数据并展示分布情况。
                 </p>
                 <p style='margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem; font-style: italic; 
                     padding: 0.5rem; background: #F8F9FA; border-radius: 4px;'>
-                    "一次只能上传一份，能否同时上传多份文档"
+                    "希望能够同时分析多个文件的数据，这样可以更好地进行整体分析"
                 </p>
             </div>
         </div>
@@ -391,20 +394,33 @@ def main():
         
         with col1:
             st.markdown('<div class="filter-item">', unsafe_allow_html=True)
-            selected_file = st.selectbox(
+            selected_files = st.multiselect(
                 "📁 选择文件",
                 options=uploaded_files,
-                format_func=lambda x: x.name
+                format_func=lambda x: x.name,
+                help="可以选择多个文件进行合并分析"
             )
             st.markdown('</div>', unsafe_allow_html=True)
         
-        if selected_file:
+        if selected_files:
             try:
-                df = pd.read_excel(selected_file, header=5)
-                # 查找路线列
+                # 创建一个空的 DataFrame 列表用于存储所有数据
+                all_dfs = []
+                
+                for file in selected_files:
+                    df = pd.read_excel(file, header=5)
+                    # 添加文件来源列
+                    df['数据来源'] = file.name
+                    all_dfs.append(df)
+                
+                # 合并所有数据
+                df = pd.concat(all_dfs, ignore_index=True)
+                
+                # 查找路线列和评分列
                 route_col = None
+                score_col = None
                 for col in df.columns:
-                    if '路��名称' in str(col) or '产品名称' in str(col):
+                    if '路线名称' in str(col) or '产品名称' in str(col):
                         route_col = col
                         routes = df[route_col].dropna().unique()
                         with col2:
@@ -417,6 +433,36 @@ def main():
                             )
                             st.markdown('</div>', unsafe_allow_html=True)
                         break
+                    
+                    if '总安排打分' in str(col):
+                        score_col = col
+                
+                # 显示当前分析文件信息
+                st.markdown(f"""
+                <div style='background-color: #EBF5FB; padding: 0.8rem 1.2rem; border-radius: 8px; 
+                     margin: 1rem 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05);'>
+                    <p style='color: #2E86C1; margin: 0; font-size: 0.9rem;'>
+                        📄 当前分析文件：<strong>{', '.join(f.name for f in selected_files)}</strong>
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # 添加数据来源分布统计
+                st.markdown("""
+                <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
+                     margin: 1rem 0; border: 1px solid #E0E0E0;'>
+                    <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem;'>数据来源分布</h4>
+                """, unsafe_allow_html=True)
+                
+                source_counts = df['数据来源'].value_counts()
+                fig_source = px.pie(
+                    values=source_counts.values,
+                    names=source_counts.index,
+                    title="数据来源分布"
+                )
+                st.plotly_chart(fig_source, use_container_width=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col3:
                     st.markdown('<div class="filter-item">', unsafe_allow_html=True)
@@ -442,9 +488,19 @@ def main():
         st.markdown('</div></div>', unsafe_allow_html=True)
         
         # 主要内容区域
-        if selected_file:
+        if selected_files:
             try:
-                df = pd.read_excel(selected_file, header=5)
+                # 创建一个空的 DataFrame 列表用于存储所有数据
+                all_dfs = []
+                
+                for file in selected_files:
+                    df = pd.read_excel(file, header=5)
+                    # 添加文件来源列
+                    df['数据来源'] = file.name
+                    all_dfs.append(df)
+                
+                # 合并所有数据
+                df = pd.concat(all_dfs, ignore_index=True)
                 
                 # 查找路线列和评分列
                 route_col = None
@@ -456,7 +512,7 @@ def main():
                         score_col = col
                 
                 if score_col is None:
-                    st.error(f'在文件 {selected_file.name} 中未找到"总安排打分"列')
+                    st.error('在上传的文件中未找到"总安排打分"列')
                     return
                 
                 # 应用筛选条件
@@ -482,19 +538,19 @@ def main():
                 scores = filtered_df[score_col]
                 
                 # 显示当前文件统计信息
+                total_comments = len(comments)
+                low_score_comments = sum(1 for score in scores if score <= 3)
+                
                 st.markdown(f"""
                 <div style='background-color: #EBF5FB; padding: 0.8rem 1.2rem; border-radius: 8px; 
                      margin: 1rem 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); display: inline-block;'>
                     <p style='color: #2E86C1; margin: 0; font-size: 0.9rem;'>
-                        📄 当前分析文件：<strong>{selected_file.name}</strong>
+                        📄 当前分析文件：<strong>{', '.join(f.name for f in selected_files)}</strong>
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # 显示筛选结果统计
-                total_comments = len(comments)
-                low_score_comments = sum(1 for score in scores if score <= 3)
-                
                 st.markdown("""
                 <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
                      margin: 1rem 0; border: 1px solid #E0E0E0;'>
@@ -519,7 +575,7 @@ def main():
                 suggestion_comments = {}
                 negative_comments = {}
                 
-                for comment, score in zip(comments, scores):
+                for comment, source, score in zip(comments, filtered_df['数据来源'], scores):
                     if pd.isna(comment) or pd.isna(score):
                         continue
                     
@@ -540,27 +596,27 @@ def main():
                             comment_words.add(word)
                             if word not in word_comments:
                                 word_comments[word] = set()
-                            word_comments[word].add(comment)
+                            word_comments[word].add((comment, source))
                             
                             if score <= 3:
                                 word_freq_low[word] += 1
                                 if word not in word_comments_low:
                                     word_comments_low[word] = set()
-                                word_comments_low[word].add(comment)
+                                word_comments_low[word].add((comment, source))
                             
                             # 添加建议词统计
                             if word in SUGGESTION_WORDS:
                                 suggestion_freq[word] += 1
                                 if word not in suggestion_comments:
                                     suggestion_comments[word] = set()
-                                suggestion_comments[word].add(comment)
+                                suggestion_comments[word].add((comment, source))
                             
                             # 添加负面词统计
                             if word in NEGATIVE_WORDS:
                                 negative_freq[word] += 1
                                 if word not in negative_comments:
                                     negative_comments[word] = set()
-                                negative_comments[word].add(comment)
+                                negative_comments[word].add((comment, source))
                 
                 # 修改标签页的显示
                 tab1, tab2, tab3, tab4 = st.tabs([
@@ -600,11 +656,22 @@ def main():
                         if selected_word:
                             st.subheader(f"包含 '{selected_word}' 的评论：")
                             relevant_comments = word_comments.get(selected_word, set())
-                            unique_comments = get_most_complete_comment(relevant_comments)
+                            unique_comments = []
+                            seen_texts = set()
+                            for comment, source in relevant_comments:
+                                normalized = ' '.join(comment.split())
+                                if normalized not in seen_texts:
+                                    seen_texts.add(normalized)
+                                    unique_comments.append((comment, source))
                             
-                            for comment in unique_comments:
+                            for comment, source in unique_comments:
                                 st.markdown(
-                                    highlight_words(comment, selected_word),
+                                    f"""
+                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
+                                        {highlight_words(comment, selected_word, source)}
+                                    </div>
+                                    """,
                                     unsafe_allow_html=True
                                 )
                     else:
@@ -641,11 +708,22 @@ def main():
                         if selected_word:
                             st.subheader(f"包含 '{selected_word}' 的差评：")
                             relevant_comments = word_comments_low.get(selected_word, set())
-                            unique_comments = get_most_complete_comment(relevant_comments)
+                            unique_comments = []
+                            seen_texts = set()
+                            for comment, source in relevant_comments:
+                                normalized = ' '.join(comment.split())
+                                if normalized not in seen_texts:
+                                    seen_texts.add(normalized)
+                                    unique_comments.append((comment, source))
                             
-                            for comment in unique_comments:
+                            for comment, source in unique_comments:
                                 st.markdown(
-                                    highlight_words(comment, selected_word),
+                                    f"""
+                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
+                                        {highlight_words(comment, selected_word, source)}
+                                    </div>
+                                    """,
                                     unsafe_allow_html=True
                                 )
                     else:
@@ -673,11 +751,22 @@ def main():
                         if selected_word:
                             st.subheader(f"包含 '{selected_word}' 的评论：")
                             relevant_comments = suggestion_comments.get(selected_word, set())
-                            unique_comments = get_most_complete_comment(relevant_comments)
+                            unique_comments = []
+                            seen_texts = set()
+                            for comment, source in relevant_comments:
+                                normalized = ' '.join(comment.split())
+                                if normalized not in seen_texts:
+                                    seen_texts.add(normalized)
+                                    unique_comments.append((comment, source))
                             
-                            for comment in unique_comments:
+                            for comment, source in unique_comments:
                                 st.markdown(
-                                    highlight_words(comment, selected_word),
+                                    f"""
+                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
+                                        {highlight_words(comment, selected_word, source)}
+                                    </div>
+                                    """,
                                     unsafe_allow_html=True
                                 )
                     else:
@@ -705,18 +794,29 @@ def main():
                         if selected_word:
                             st.subheader(f"包含 '{selected_word}' 的评论：")
                             relevant_comments = negative_comments.get(selected_word, set())
-                            unique_comments = get_most_complete_comment(relevant_comments)
+                            unique_comments = []
+                            seen_texts = set()
+                            for comment, source in relevant_comments:
+                                normalized = ' '.join(comment.split())
+                                if normalized not in seen_texts:
+                                    seen_texts.add(normalized)
+                                    unique_comments.append((comment, source))
                             
-                            for comment in unique_comments:
+                            for comment, source in unique_comments:
                                 st.markdown(
-                                    highlight_words(comment, selected_word),
+                                    f"""
+                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
+                                        {highlight_words(comment, selected_word, source)}
+                                    </div>
+                                    """,
                                     unsafe_allow_html=True
                                 )
                     else:
                         st.info("没有找到负面情绪相关的评论")
                 
             except Exception as e:
-                st.error(f"处理文件 {selected_file.name} 时出错: {str(e)}")
+                st.error(f"处理文件时出错: {str(e)}")
 
 if __name__ == "__main__":
     main()
