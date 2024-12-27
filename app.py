@@ -35,6 +35,9 @@ STOP_WORDS = {
     '虽然', '这样', '这些', '那些', '如此', '只是', '真的', '一个',
 }
 
+# 用户自定义停用词
+USER_STOP_WORDS = set()
+
 # 建议相关词汇
 SUGGESTION_WORDS = {
     '议', '觉得', '希望', '调', '换', '改', '改进', '完善',
@@ -52,6 +55,95 @@ NEGATIVE_WORDS = {
 
 # 在文件开头添加版本常量
 VERSION = "2.0.0"  # 更新版本号
+
+# 在文件开头，USER_STOP_WORDS 定义后添加
+if 'user_stop_words' not in st.session_state:
+    st.session_state.user_stop_words = set()
+
+# 在文件开头添加自定义样式
+st.markdown("""
+<style>
+    /* 输入框样式 */
+    .stTextInput input {
+        border: 2px solid #2E86C1 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        background-color: white !important;
+        color: #333 !important;
+        font-size: 0.9rem !important;
+    }
+    .stTextInput input:focus {
+        box-shadow: 0 0 0 2px rgba(46,134,193,0.2) !important;
+        border-color: #2E86C1 !important;
+    }
+    
+    /* 文本区域样式 */
+    .stTextArea textarea {
+        border: 2px solid #2E86C1 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        background-color: white !important;
+        color: #333 !important;
+        font-size: 0.9rem !important;
+    }
+    .stTextArea textarea:focus {
+        box-shadow: 0 0 0 2px rgba(46,134,193,0.2) !important;
+        border-color: #2E86C1 !important;
+    }
+    
+    /* 多选框样式 */
+    .stMultiSelect {
+        background-color: white !important;
+        border: 2px solid #2E86C1 !important;
+        border-radius: 8px !important;
+        padding: 2px !important;
+    }
+    .stMultiSelect:hover {
+        border-color: #2E86C1 !important;
+    }
+    
+    /* 按钮样式 */
+    .stButton button {
+        background-color: #2E86C1 !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+    }
+    .stButton button:hover {
+        background-color: #2874A6 !important;
+        box-shadow: 0 2px 6px rgba(46,134,193,0.3) !important;
+    }
+    
+    /* 标签样式 */
+    .stSelectbox label, .stMultiSelect label, .stTextInput label {
+        color: #2E86C1 !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    
+    /* 下拉框样式 */
+    .stSelectbox select {
+        border: 2px solid #2E86C1 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        background-color: white !important;
+        color: #333 !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* 帮助文本样式 */
+    .stMarkdown div.help-text {
+        color: #666 !important;
+        font-size: 0.85rem !important;
+        margin-top: 0.2rem !important;
+        font-style: italic !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # 工具函数
 def ensure_font():
@@ -263,7 +355,7 @@ def render_header():
     </div>
     """, unsafe_allow_html=True)
     
-    # 在 render_header 函数中，使用说明之前添加系统公告
+    # 在 render_header 函��中，使用说添加系统公告
     image_url = "https://raw.githubusercontent.com/你的用户名/仓库名/main/feedback.png"
 
     st.markdown("""
@@ -283,7 +375,7 @@ def render_header():
             </ul>
             <div style='background: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem;'>
                 <p style='margin: 0; color: #2E86C1;'>
-                    💡 使用提示：现在可以同时选择多个文件进行合并分析，系统会自动整合所有数据并展示分布情况。
+                    💡 使用提示：现在可以同时选择多个文件进行合并分析，系统会自动整合所有数据示分布情况。
                 </p>
                 <p style='margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem; font-style: italic; 
                     padding: 0.5rem; background: #F8F9FA; border-radius: 4px;'>
@@ -354,7 +446,7 @@ def main():
                 z-index: 1000;
             }
             
-            /* 筛选条件网格布局 */
+            /* 筛选条格布局 */
             .filter-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -404,417 +496,542 @@ def main():
         
         if selected_files:
             try:
-                # 创建一个空的 DataFrame 列表用于存储所有数据
-                all_dfs = []
+                # 初始化筛选条件变量
+                filter_keyword = ""
+                comment_type = ["全部评论"]
                 
-                for file in selected_files:
-                    df = pd.read_excel(file, header=5)
-                    # 添加文件来源列
-                    df['数据来源'] = file.name
-                    all_dfs.append(df)
+                # 创建两列布局：左侧为控制面板，右侧为分析结果
+                control_col, result_col = st.columns([1, 2])
                 
-                # 合并所有数据
-                df = pd.concat(all_dfs, ignore_index=True)
-                
-                # 查找路线列和评分列
-                route_col = None
-                score_col = None
-                for col in df.columns:
-                    if '路线名称' in str(col) or '产品名称' in str(col):
-                        route_col = col
-                        routes = df[route_col].dropna().unique()
-                        with col2:
-                            st.markdown('<div class="filter-item">', unsafe_allow_html=True)
-                            selected_routes = st.multiselect(
-                                "🛣️ 选择路线",
-                                options=routes,
+                with control_col:
+                    # 控制面板容器
+                    st.markdown("""
+                    <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
+                         border: 1px solid #E0E0E0; height: 100%;'>
+                        <h4 style='color: #2E86C1; margin-bottom: 1rem; font-size: 1rem;'>🎮 控制面板</h4>
+                    """, unsafe_allow_html=True)
+                    
+                    # 文件信息
+                    st.markdown(f"""
+                    <div style='background-color: white; padding: 0.8rem; border-radius: 6px; 
+                         margin-bottom: 1rem; border: 1px solid #E0E0E0;'>
+                        <p style='margin: 0; font-size: 0.9rem;'>
+                            📄 分析文件：<br><strong>{', '.join(f.name for f in selected_files)}</strong>
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # 筛选条件（折叠面板）
+                    with st.expander("🔍 筛选条件", expanded=True):
+                        filter_keyword = st.text_input("关键词筛选", help="输入关键词筛选评论")
+                        comment_type = st.multiselect(
+                            "评论类型",
+                            options=["全部评论", "建议评论", "负面评论"],
+                            default=["全部评论"]
+                        )
+                    
+                    # 词汇管理（折叠面板）
+                    with st.expander("⚙️ 词汇管理", expanded=False):
+                        # 添加停用词
+                        new_stop_words = st.text_area(
+                            "添加需要过滤的词（每行一个）",
+                            help="输入需要从分析中排除的词，每行输入一个词",
+                            key="stop_word_input",
+                            height=100
+                        )
+                        if st.button("添加到停用词", key="add_stop_word"):
+                            if new_stop_words:
+                                words_to_add = {word.strip() for word in new_stop_words.split('\n') if word.strip()}
+                                st.session_state.user_stop_words.update(words_to_add)
+                                if words_to_add:
+                                    st.success(f"已添加 {len(words_to_add)} 个停用词")
+                        
+                        # 管理停用词
+                        if st.session_state.user_stop_words:
+                            selected_words = st.multiselect(
+                                "当前停用词（可多选删除）",
+                                options=sorted(list(st.session_state.user_stop_words)),
                                 default=[],
-                                help="选择要分析的路线"
+                                key="stop_word_select"
                             )
-                            st.markdown('</div>', unsafe_allow_html=True)
-                        break
+                            c1, c2 = st.columns(2)
+                            with c1:
+                                if st.button("删除选中", key="delete_stop_word"):
+                                    for word in selected_words:
+                                        st.session_state.user_stop_words.remove(word)
+                            with c2:
+                                if st.button("清空全部", key="clear_stop_words"):
+                                    st.session_state.user_stop_words.clear()
                     
-                    if '总安排打分' in str(col):
-                        score_col = col
-                
-                # 显示当前分析文件信息
-                st.markdown(f"""
-                <div style='background-color: #EBF5FB; padding: 0.8rem 1.2rem; border-radius: 8px; 
-                     margin: 1rem 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05);'>
-                    <p style='color: #2E86C1; margin: 0; font-size: 0.9rem;'>
-                        📄 当前分析文件：<strong>{', '.join(f.name for f in selected_files)}</strong>
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+                    # 数据处理
+                    all_dfs = []
+                    for file in selected_files:
+                        df = pd.read_excel(file, header=5)
+                        df['数据来源'] = file.name
+                        all_dfs.append(df)
+                    
+                    # 合并所有数据
+                    df = pd.concat(all_dfs, ignore_index=True)
+                    
+                    # 查找路线列和评分列
+                    route_col = None
+                    score_col = None
+                    for col in df.columns:
+                        if '路线名称' in str(col) or '产品名称' in str(col):
+                            route_col = col
+                        if '总安排打分' in str(col):
+                            score_col = col
+                    
+                    if score_col is None:
+                        st.error('在上传的文件中未找到"总安排打分"列')
+                        return
+                    
+                    # 应用筛选条件
+                    mask = pd.Series(True, index=df.index)
+                    
+                    if filter_keyword:
+                        mask = mask & df.iloc[:, 0].str.contains(filter_keyword, na=False)
+                    
+                    if "全部评论" not in comment_type:
+                        if "建议评论" in comment_type:
+                            suggestion_mask = df.iloc[:, 0].str.contains('|'.join(SUGGESTION_WORDS), na=False)
+                            mask = mask & suggestion_mask
+                        if "负面评论" in comment_type:
+                            negative_mask = df.iloc[:, 0].str.contains('|'.join(NEGATIVE_WORDS), na=False)
+                            mask = mask & negative_mask
+                    
+                    filtered_df = df[mask]
+                    comments = filtered_df.iloc[:, 0]
+                    scores = filtered_df[score_col]
+                    
+                    # 计算统计数据
+                    total_comments = len(comments)
+                    low_score_comments = sum(1 for score in scores if score <= 3)
+                    
+                    # 数据统计
+                    st.metric("总评论数", total_comments)
+                    st.metric("��评数", low_score_comments)
+                    
+                    # 在进入标签页之前，先初始化所有计数器
+                    # 词频统计
+                    word_freq = Counter()
+                    word_freq_low = Counter()
+                    word_comments = {}
+                    word_comments_low = {}
+                    suggestion_freq = Counter()
+                    negative_freq = Counter()
+                    suggestion_comments = {}
+                    negative_comments = {}
+                    
+                    # 处理评论数据
+                    for comment, source, score in zip(comments, filtered_df['数据来源'], scores):
+                        if pd.isna(comment) or pd.isna(score):
+                            continue
+                        
+                        comment = str(comment).strip()
+                        if not comment:
+                            continue
+                        
+                        words = jieba.cut(comment)
+                        comment_words = set()
+                        
+                        for word in words:
+                            word = word.strip()
+                            if (len(word) > 1 and
+                                word not in STOP_WORDS and
+                                word not in st.session_state.user_stop_words and
+                                not word.isdigit()):
+                                
+                                # 总体词频统计
+                                word_freq[word] += 1
+                                if word not in word_comments:
+                                    word_comments[word] = set()
+                                word_comments[word].add((comment, source))
+                                
+                                # 差评词频统计
+                                if score <= 3:
+                                    word_freq_low[word] += 1
+                                    if word not in word_comments_low:
+                                        word_comments_low[word] = set()
+                                    word_comments_low[word].add((comment, source))
+                                
+                                # 建议词统计
+                                if word in SUGGESTION_WORDS:
+                                    suggestion_freq[word] += 1
+                                    if word not in suggestion_comments:
+                                        suggestion_comments[word] = set()
+                                    suggestion_comments[word].add((comment, source))
+                                
+                                # 负面词统计
+                                if word in NEGATIVE_WORDS:
+                                    negative_freq[word] += 1
+                                    if word not in negative_comments:
+                                        negative_comments[word] = set()
+                                    negative_comments[word].add((comment, source))
+                    
+                    # 然后在标签页中使用这些
+                    with result_col:
+                        # 分析结果标签页
+                        tab1, tab2, tab3, tab4 = st.tabs([
+                            "📈 总体分析", "📉 差评分析", 
+                            "💡 建议分析", "😟 负面分析"
+                        ])
 
-                # 添加数据来源分布统计
-                st.markdown("""
-                <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
-                     margin: 1rem 0; border: 1px solid #E0E0E0;'>
-                    <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem;'>数据来源分布</h4>
-                """, unsafe_allow_html=True)
-                
-                source_counts = df['数据来源'].value_counts()
-                fig_source = px.pie(
-                    values=source_counts.values,
-                    names=source_counts.index,
-                    title="数据来源分布"
-                )
-                st.plotly_chart(fig_source, use_container_width=True)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-                with col3:
-                    st.markdown('<div class="filter-item">', unsafe_allow_html=True)
-                    filter_keyword = st.text_input(
-                        "🔤 关键词",
-                        help="输入关键词筛选"
-                    )
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
-                with col4:
-                    st.markdown('<div class="filter-item">', unsafe_allow_html=True)
-                    comment_type = st.multiselect(
-                        "📝 评论类型",
-                        options=["全部评论", "建议评论", "负面评论"],
-                        default=["全部评论"],
-                        help="选择评论类型"
-                    )
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
-            except Exception as e:
-                st.error(f"读取文件时出错: {str(e)}")
-        
-        st.markdown('</div></div>', unsafe_allow_html=True)
-        
-        # 主要内容区域
-        if selected_files:
-            try:
-                # 创建一个空的 DataFrame 列表用于存储所有数据
-                all_dfs = []
-                
-                for file in selected_files:
-                    df = pd.read_excel(file, header=5)
-                    # 添加文件来源列
-                    df['数据来源'] = file.name
-                    all_dfs.append(df)
-                
-                # 合并所有数据
-                df = pd.concat(all_dfs, ignore_index=True)
-                
-                # 查找路线列和评分列
-                route_col = None
-                score_col = None
-                for col in df.columns:
-                    if '路线名称' in str(col) or '产品名称' in str(col):
-                        route_col = col
-                    if '总安排打分' in str(col):
-                        score_col = col
-                
-                if score_col is None:
-                    st.error('在上传的文件中未找到"总安排打分"列')
-                    return
-                
-                # 应用筛选条件
-                mask = pd.Series(True, index=df.index)  # 初始化全为 True 的掩码
-                
-                # 添加路线筛选条件
-                if route_col and selected_routes:
-                    mask = mask & df[route_col].isin(selected_routes)
-                
-                if filter_keyword:
-                    mask = mask & df.iloc[:, 0].str.contains(filter_keyword, na=False)
-                
-                if "全部评论" not in comment_type:
-                    if "建议评论" in comment_type:
-                        suggestion_mask = df.iloc[:, 0].str.contains('|'.join(SUGGESTION_WORDS), na=False)
-                        mask = mask & suggestion_mask
-                    if "负面评论" in comment_type:
-                        negative_mask = df.iloc[:, 0].str.contains('|'.join(NEGATIVE_WORDS), na=False)
-                        mask = mask & negative_mask
-                
-                filtered_df = df[mask]
-                comments = filtered_df.iloc[:, 0]
-                scores = filtered_df[score_col]
-                
-                # 显示当前文件统计信息
-                total_comments = len(comments)
-                low_score_comments = sum(1 for score in scores if score <= 3)
-                
-                st.markdown(f"""
-                <div style='background-color: #EBF5FB; padding: 0.8rem 1.2rem; border-radius: 8px; 
-                     margin: 1rem 0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); display: inline-block;'>
-                    <p style='color: #2E86C1; margin: 0; font-size: 0.9rem;'>
-                        📄 当前分析文件：<strong>{', '.join(f.name for f in selected_files)}</strong>
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 显示筛选结果统计
-                st.markdown("""
-                <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
-                     margin: 1rem 0; border: 1px solid #E0E0E0;'>
-                    <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem;'>筛选结果统计</h4>
-                """, unsafe_allow_html=True)
-                
-                mcol1, mcol2 = st.columns(2)
-                with mcol1:
-                    st.metric("筛选后评论数", total_comments)
-                with mcol2:
-                    st.metric("其中差评数", low_score_comments)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-                # 词频统计
-                word_freq = Counter()
-                word_freq_low = Counter()
-                word_comments = {}
-                word_comments_low = {}
-                suggestion_freq = Counter()
-                negative_freq = Counter()
-                suggestion_comments = {}
-                negative_comments = {}
-                
-                for comment, source, score in zip(comments, filtered_df['数据来源'], scores):
-                    if pd.isna(comment) or pd.isna(score):
-                        continue
-                    
-                    comment = str(comment).strip()
-                    if not comment:
-                        continue
-                    
-                    words = jieba.cut(comment)
-                    comment_words = set()
-                    
-                    for word in words:
-                        word = word.strip()
-                        if (len(word) > 1 and
-                            word not in STOP_WORDS and
-                            not word.isdigit()):
-                            
-                            word_freq[word] += 1
-                            comment_words.add(word)
-                            if word not in word_comments:
-                                word_comments[word] = set()
-                            word_comments[word].add((comment, source))
-                            
-                            if score <= 3:
-                                word_freq_low[word] += 1
-                                if word not in word_comments_low:
-                                    word_comments_low[word] = set()
-                                word_comments_low[word].add((comment, source))
-                            
-                            # 添加建议词统计
-                            if word in SUGGESTION_WORDS:
-                                suggestion_freq[word] += 1
-                                if word not in suggestion_comments:
-                                    suggestion_comments[word] = set()
-                                suggestion_comments[word].add((comment, source))
-                            
-                            # 添加负面词统计
-                            if word in NEGATIVE_WORDS:
-                                negative_freq[word] += 1
-                                if word not in negative_comments:
-                                    negative_comments[word] = set()
-                                negative_comments[word].add((comment, source))
-                
-                # 修改标签页的显示
-                tab1, tab2, tab3, tab4 = st.tabs([
-                    "📈  所有评论分析  ",
-                    "📉  差评分析  ",
-                    "💡  建议分析  ",
-                    "😟  负面情绪分析  "
-                ])
-                
-                with tab1:
-                    if word_freq:
-                        st.subheader("词云图")
-                        wc = WordCloud(
-                            font_path=ensure_font(),
-                            width=800,
-                            height=400,
-                            background_color='white',
-                            max_words=100
-                        )
-                        wc.generate_from_frequencies(word_freq)
-                        st.image(wc.to_array())
-                        
-                        st.subheader("词频统计")
-                        top_words = dict(sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:20])
-                        fig = px.bar(
-                            x=list(top_words.keys()),
-                            y=list(top_words.values()),
-                            labels={'x': '关键词', 'y': '出现次数'}
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        selected_word = st.selectbox(
-                            "选择关键词查看相关评论",
-                            options=list(top_words.keys())
-                        )
-                        
-                        if selected_word:
-                            st.subheader(f"包含 '{selected_word}' 的评论：")
-                            relevant_comments = word_comments.get(selected_word, set())
-                            unique_comments = []
-                            seen_texts = set()
-                            for comment, source in relevant_comments:
-                                normalized = ' '.join(comment.split())
-                                if normalized not in seen_texts:
-                                    seen_texts.add(normalized)
-                                    unique_comments.append((comment, source))
-                            
-                            for comment, source in unique_comments:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
-                                        {highlight_words(comment, selected_word, source)}
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                    else:
-                        st.info("没有找到有效的评论数据")
-                
-                with tab2:
-                    if word_freq_low:
-                        st.subheader("差评词云图")
-                        wc = WordCloud(
-                            font_path=ensure_font(),
-                            width=800,
-                            height=400,
-                            background_color='white',
-                            max_words=100
-                        )
-                        wc.generate_from_frequencies(word_freq_low)
-                        st.image(wc.to_array())
-                        
-                        st.subheader("差评词频统计")
-                        top_words = dict(sorted(word_freq_low.items(), key=lambda x: x[1], reverse=True)[:20])
-                        fig = px.bar(
-                            x=list(top_words.keys()),
-                            y=list(top_words.values()),
-                            labels={'x': '关键词', 'y': '出现次数'}
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        selected_word = st.selectbox(
-                            "选择关键词查看相关差评",
-                            options=list(top_words.keys()),
-                            key="low_score_select"
-                        )
-                        
-                        if selected_word:
-                            st.subheader(f"包含 '{selected_word}' 的差评：")
-                            relevant_comments = word_comments_low.get(selected_word, set())
-                            unique_comments = []
-                            seen_texts = set()
-                            for comment, source in relevant_comments:
-                                normalized = ' '.join(comment.split())
-                                if normalized not in seen_texts:
-                                    seen_texts.add(normalized)
-                                    unique_comments.append((comment, source))
-                            
-                            for comment, source in unique_comments:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
-                                        {highlight_words(comment, selected_word, source)}
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                    else:
-                        st.info("没有找到差评数据")
-                
-                # 添加建议分析标签页
-                with tab3:
-                    if suggestion_freq:
-                        st.subheader("建议关键词统计")
-                        top_suggestions = dict(sorted(suggestion_freq.items(), key=lambda x: x[1], reverse=True)[:20])
-                        fig = px.bar(
-                            x=list(top_suggestions.keys()),
-                            y=list(top_suggestions.values()),
-                            labels={'x': '建议关键词', 'y': '出现次数'},
-                            title="建议关键词分布"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        selected_word = st.selectbox(
-                            "选择关键词查看相关建议",
-                            options=list(top_suggestions.keys()),
-                            key="suggestion_select"
-                        )
-                        
-                        if selected_word:
-                            st.subheader(f"包含 '{selected_word}' 的评论：")
-                            relevant_comments = suggestion_comments.get(selected_word, set())
-                            unique_comments = []
-                            seen_texts = set()
-                            for comment, source in relevant_comments:
-                                normalized = ' '.join(comment.split())
-                                if normalized not in seen_texts:
-                                    seen_texts.add(normalized)
-                                    unique_comments.append((comment, source))
-                            
-                            for comment, source in unique_comments:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
-                                        {highlight_words(comment, selected_word, source)}
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                    else:
-                        st.info("没有找到建议相关的评论")
-                
-                # 添加负面情绪分析标签页
-                with tab4:
-                    if negative_freq:
-                        st.subheader("负面情绪词统计")
-                        top_negative = dict(sorted(negative_freq.items(), key=lambda x: x[1], reverse=True)[:20])
-                        fig = px.bar(
-                            x=list(top_negative.keys()),
-                            y=list(top_negative.values()),
-                            labels={'x': '负面情绪词', 'y': '出现次数'},
-                            title="负面情绪词分布"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        selected_word = st.selectbox(
-                            "选择关键词查看相关负面评论",
-                            options=list(top_negative.keys()),
-                            key="negative_select"
-                        )
-                        
-                        if selected_word:
-                            st.subheader(f"包含 '{selected_word}' 的评论：")
-                            relevant_comments = negative_comments.get(selected_word, set())
-                            unique_comments = []
-                            seen_texts = set()
-                            for comment, source in relevant_comments:
-                                normalized = ' '.join(comment.split())
-                                if normalized not in seen_texts:
-                                    seen_texts.add(normalized)
-                                    unique_comments.append((comment, source))
-                            
-                            for comment, source in unique_comments:
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0;">
-                                        {highlight_words(comment, selected_word, source)}
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                    else:
-                        st.info("没有找到负面情绪相关的评论")
-                
+                        # 总体分析
+                        with tab1:
+                            if word_freq:
+                                # 创建一个容器来包裹所有内容
+                                with st.container():
+                                    # 第一行：数据来源和词云图
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        st.subheader("📊 数据来源分布")
+                                        source_counts = filtered_df['数据来源'].value_counts()
+                                        fig_source = px.pie(
+                                            values=source_counts.values,
+                                            names=source_counts.index,
+                                            height=300,  # 固定高度
+                                            width=None,  # 自动应宽度
+                                        )
+                                        # 调整饼图布局
+                                        fig_source.update_layout(
+                                            margin=dict(l=20, r=20, t=20, b=20),  # 减小边距
+                                            showlegend=True,  # 显示图例
+                                            legend=dict(
+                                                orientation="h",  # 水平图例
+                                                yanchor="bottom",
+                                                y=1.02,  # 图例位置
+                                                xanchor="right",
+                                                x=1
+                                            ),
+                                            # 调整饼图大小
+                                            autosize=True,  # 自动调整大小
+                                            height=300,  # 固定高度
+                                        )
+                                        # 调整饼图样式
+                                        fig_source.update_traces(
+                                            textposition='inside',  # 文字位置
+                                            textinfo='percent+label',  # 显示百分比和标签
+                                            hole=0.3,  # 添加环形效果
+                                            pull=[0.05] * len(source_counts),  # 轻微分离扇形
+                                            marker=dict(
+                                                colors=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'],  # 自定义颜色
+                                                line=dict(color='white', width=2)  # 添加白色边框
+                                            )
+                                        )
+                                        st.plotly_chart(fig_source, use_container_width=True, config={
+                                            'displayModeBar': False  # 隐藏plotly工具栏
+                                        })
+                                    
+                                    with col2:
+                                        st.subheader("☁️ 词云图")
+                                        wc = WordCloud(
+                                            font_path=ensure_font(),
+                                            width=400,
+                                            height=300,
+                                            background_color='white'
+                                        )
+                                        wc.generate_from_frequencies(word_freq)
+                                        st.image(wc.to_array())
+                                    
+                                    # 第二行：词频统计
+                                    st.subheader("📈 词频统计")
+                                    top_words = dict(sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:20])
+                                    fig = px.bar(
+                                        x=list(top_words.keys()),
+                                        y=list(top_words.values()),
+                                        labels={'x': '关键词', 'y': '出现次数'},
+                                        height=400  # 固定高度
+                                    )
+                                    fig.update_layout(
+                                        margin=dict(l=20, r=20, t=20, b=80),  # 增加底部边距，为倾斜的标签留出空间
+                                        xaxis_tickangle=-45,  # 标签倾斜角度
+                                        xaxis=dict(
+                                            tickmode='array',
+                                            ticktext=list(top_words.keys()),
+                                            tickvals=list(range(len(top_words))),
+                                            tickfont=dict(size=11)  # 调整字体大小
+                                        ),
+                                        yaxis=dict(
+                                            title='出现次数',
+                                            titlefont=dict(size=12),
+                                            tickfont=dict(size=11)
+                                        ),
+                                        bargap=0.2,  # 调整柱子之间的间距
+                                        plot_bgcolor='white',  # 设置背景色为白色
+                                        showlegend=False
+                                    )
+                                    fig.update_traces(
+                                        marker_color='#2E86C1',  # 设置柱子颜色
+                                        marker_line_color='#2874A6',  # 设置柱子边框颜色
+                                        marker_line_width=1,  # 设置柱子边框宽度
+                                        opacity=0.8  # 设置透明度
+                                    )
+                                    fig.update_yaxes(
+                                        showgrid=True,
+                                        gridwidth=1,
+                                        gridcolor='rgba(211,211,211,0.3)'  # 淡灰色网格线
+                                    )
+                                    st.plotly_chart(fig, use_container_width=True, config={
+                                        'displayModeBar': False  # 隐藏plotly工具栏
+                                    })
+                                    
+                                    # 第三行：评论详情
+                                    st.markdown("""
+                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💬 评论详情</h3>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    selected_word = st.selectbox(
+                                        "选择关键词查看相关评论",
+                                        options=list(top_words.keys())
+                                    )
+                                    
+                                    if selected_word:
+                                        relevant_comments = word_comments.get(selected_word, set())
+                                        unique_comments = []
+                                        seen_texts = set()
+                                        for comment, source in relevant_comments:
+                                            normalized = ' '.join(comment.split())
+                                            if normalized not in seen_texts:
+                                                seen_texts.add(normalized)
+                                                unique_comments.append((comment, source))
+                                        
+                                        # 使用网格布局显示评论
+                                        cols = st.columns(2)
+                                        for i, (comment, source) in enumerate(unique_comments):
+                                            with cols[i % 2]:
+                                                st.markdown(
+                                                    f"""
+                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
+                                                        <div style="color: #333;">{comment.replace(selected_word, 
+                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
+                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
+                                                            来源: {source}
+                                                        </div>
+                                                    </div>
+                                                    """,
+                                                    unsafe_allow_html=True
+                                                )
+                                    
+                                    st.markdown("</div>", unsafe_allow_html=True)
+                            else:
+                                st.info("没有找到有效的评论数据")
+
+                        # 差评分析
+                        with tab2:
+                            if word_freq_low:
+                                # 创建一个容器来包裹所有内容
+                                with st.container():
+                                    # 第一行：词云图和词频统计
+                                    viz_col1, viz_col2 = st.columns(2)
+                                    
+                                    with viz_col1:
+                                        st.subheader("☁️ 差评词云图")
+                                        wc = WordCloud(
+                                            font_path=ensure_font(),
+                                            width=400,
+                                            height=300,
+                                            background_color='white'
+                                        )
+                                        wc.generate_from_frequencies(word_freq_low)
+                                        st.image(wc.to_array())
+                                    
+                                    with viz_col2:
+                                        st.subheader("📊 差评词频统计")
+                                        top_words_low = dict(sorted(word_freq_low.items(), key=lambda x: x[1], reverse=True)[:20])
+                                        fig = px.bar(
+                                            x=list(top_words_low.keys()),
+                                            y=list(top_words_low.values()),
+                                            labels={'x': '关键词', 'y': '出现次数'},
+                                            height=300  # 固定高度
+                                        )
+                                        fig.update_layout(
+                                            margin=dict(l=20, r=20, t=20, b=20),
+                                            xaxis_tickangle=-45
+                                        )
+                                        st.plotly_chart(fig, use_container_width=True)
+                                    
+                                    # 第二行：差评详情
+                                    st.markdown("""
+                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💬 差评详情</h3>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    selected_word = st.selectbox(
+                                        "选择关键词查看相关差评",
+                                        options=list(top_words_low.keys()),
+                                        key="low_score_select"
+                                    )
+                                    
+                                    if selected_word:
+                                        # 使用网格布局显示评论
+                                        cols = st.columns(2)
+                                        unique_comments = []
+                                        seen_texts = set()
+                                        for comment, source in word_comments_low.get(selected_word, set()):
+                                            normalized = ' '.join(comment.split())
+                                            if normalized not in seen_texts:
+                                                seen_texts.add(normalized)
+                                                unique_comments.append((comment, source))
+                                        
+                                        for i, (comment, source) in enumerate(unique_comments):
+                                            with cols[i % 2]:
+                                                st.markdown(
+                                                    f"""
+                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
+                                                        <div style="color: #333;">{comment.replace(selected_word, 
+                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
+                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
+                                                            来源: {source}
+                                                        </div>
+                                                    </div>
+                                                    """,
+                                                    unsafe_allow_html=True
+                                                )
+                                    
+                                    st.markdown("</div>", unsafe_allow_html=True)
+                            else:
+                                st.info("没有找到差评数据")
+
+                        # 建议分析
+                        with tab3:
+                            if suggestion_freq:
+                                with st.container():
+                                    # 第一行：建议词统计
+                                    st.subheader("📊 建议关键词统计")
+                                    top_suggestions = dict(sorted(suggestion_freq.items(), key=lambda x: x[1], reverse=True)[:20])
+                                    fig = px.bar(
+                                        x=list(top_suggestions.keys()),
+                                        y=list(top_suggestions.values()),
+                                        labels={'x': '建议关键词', 'y': '出现次数'},
+                                        height=300
+                                    )
+                                    fig.update_layout(
+                                        margin=dict(l=20, r=20, t=20, b=20),
+                                        xaxis_tickangle=-45
+                                    )
+                                    st.plotly_chart(fig, use_container_width=True)
+                                    
+                                    # 第二行：建议详情
+                                    st.markdown("""
+                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💡 建议详情</h3>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    selected_word = st.selectbox(
+                                        "选择关键词查看相关建议",
+                                        options=list(top_suggestions.keys()),
+                                        key="suggestion_select"
+                                    )
+                                    
+                                    if selected_word:
+                                        cols = st.columns(2)
+                                        unique_comments = []
+                                        seen_texts = set()
+                                        for comment, source in suggestion_comments.get(selected_word, set()):
+                                            normalized = ' '.join(comment.split())
+                                            if normalized not in seen_texts:
+                                                seen_texts.add(normalized)
+                                                unique_comments.append((comment, source))
+                                        
+                                        for i, (comment, source) in enumerate(unique_comments):
+                                            with cols[i % 2]:
+                                                st.markdown(
+                                                    f"""
+                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
+                                                        <div style="color: #333;">{comment.replace(selected_word, 
+                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
+                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
+                                                            来源: {source}
+                                                        </div>
+                                                    </div>
+                                                    """,
+                                                    unsafe_allow_html=True
+                                                )
+                                    
+                                    st.markdown("</div>", unsafe_allow_html=True)
+                            else:
+                                st.info("没有找到建议相关的评论")
+
+                        # 负面分析
+                        with tab4:
+                            if negative_freq:
+                                with st.container():
+                                    # 第一行：词云图和词频统计
+                                    viz_col1, viz_col2 = st.columns(2)
+                                    
+                                    with viz_col1:
+                                        st.subheader("☁️ 负面情绪词云图")
+                                        wc = WordCloud(
+                                            font_path=ensure_font(),
+                                            width=400,
+                                            height=300,
+                                            background_color='white'
+                                        )
+                                        wc.generate_from_frequencies(negative_freq)
+                                        st.image(wc.to_array())
+                                    
+                                    with viz_col2:
+                                        st.subheader("📊 负面情绪词统计")
+                                        top_negative = dict(sorted(negative_freq.items(), key=lambda x: x[1], reverse=True)[:20])
+                                        fig = px.bar(
+                                            x=list(top_negative.keys()),
+                                            y=list(top_negative.values()),
+                                            labels={'x': '负面情绪词', 'y': '出现次数'},
+                                            height=300  # 固定高度
+                                        )
+                                        fig.update_layout(
+                                            margin=dict(l=20, r=20, t=20, b=20),
+                                            xaxis_tickangle=-45
+                                        )
+                                        st.plotly_chart(fig, use_container_width=True)
+                                    
+                                    # 第二行：负面评论详情
+                                    st.markdown("""
+                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">😟 负面评论详情</h3>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    selected_word = st.selectbox(
+                                        "选择关键词查看相关负面评论",
+                                        options=list(top_negative.keys()),
+                                        key="negative_select"
+                                    )
+                                    
+                                    if selected_word:
+                                        cols = st.columns(2)
+                                        unique_comments = []
+                                        seen_texts = set()
+                                        for comment, source in negative_comments.get(selected_word, set()):
+                                            normalized = ' '.join(comment.split())
+                                            if normalized not in seen_texts:
+                                                seen_texts.add(normalized)
+                                                unique_comments.append((comment, source))
+                                        
+                                        for i, (comment, source) in enumerate(unique_comments):
+                                            with cols[i % 2]:
+                                                st.markdown(
+                                                    f"""
+                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
+                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
+                                                        <div style="color: #333;">{comment.replace(selected_word, 
+                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
+                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
+                                                            来源: {source}
+                                                        </div>
+                                                    </div>
+                                                    """,
+                                                    unsafe_allow_html=True
+                                                )
+                                    
+                                    st.markdown("</div>", unsafe_allow_html=True)
+                            else:
+                                st.info("没有找到负面情绪相关的评论")
+
             except Exception as e:
                 st.error(f"处理文件时出错: {str(e)}")
 

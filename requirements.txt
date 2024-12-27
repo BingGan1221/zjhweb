@@ -1,8 +1,7 @@
 streamlit
 pandas
-numpy
-plotly
 jieba
 wordcloud
+plotly
 openpyxl
 requests
