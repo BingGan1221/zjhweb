@@ -1,1 +1,7 @@
- 
+# 设置默认行为
+* text=auto
+
+# 指定特定文件的行尾
+*.md text eol=lf
+*.txt text eol=lf
+*.py text eol=lf 

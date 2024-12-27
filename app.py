@@ -356,30 +356,47 @@ def render_header():
     """, unsafe_allow_html=True)
     
     # 在 render_header 函��中，使用说添加系统公告
-    image_url = "https://raw.githubusercontent.com/你的用户名/仓库名/main/feedback.png"
-
     st.markdown("""
     <div style='background: linear-gradient(135deg, #EBF5FB, #D6EAF8); padding: 1rem; border-radius: 8px; 
          margin-bottom: 1.5rem; border: 1px solid #2E86C1;'>
         <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem; display: flex; align-items: center;'>
-            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.1.0
+            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.2.0
         </h4>
         <div style='color: #2E86C1; font-size: 0.9rem; line-height: 1.5;'>
             <p style='margin: 0 0 0.5rem 0;'>更新内容：</p>
             <ul style='margin: 0 0 1rem 1.5rem;'>
-                <li>✨ <strong>新增多文件合并分析功能</strong></li>
-                <li>📊 新增数据来源分布统计</li>
-                <li>🔍 优化多文件筛选体验</li>
-                <li>📈 改进数据分析展示效果</li>
-                <li>🐛 修复已知问题，提升稳定性</li>
+                <li>📊 优化数据可视化效果
+                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
+                        <li>改进饼图和柱状图的显示比例</li>
+                        <li>优化词云图的展示效果</li>
+                    </ul>
+                </li>
+                <li>🎨 全新界面设计
+                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
+                        <li>重新设计控制面板布局</li>
+                        <li>优化评论展示样式</li>
+                    </ul>
+                </li>
+                <li>⚡️ 性能优化
+                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
+                        <li>提升多文件处理速度</li>
+                        <li>优化内存使用效率</li>
+                    </ul>
+                </li>
+                <li>🔍 交互体验提升
+                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
+                        <li>改进筛选条件的响应速度</li>
+                        <li>优化评论高亮显示效果</li>
+                    </ul>
+                </li>
             </ul>
             <div style='background: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem;'>
                 <p style='margin: 0; color: #2E86C1;'>
-                    💡 使用提示：现在可以同时选择多个文件进行合并分析，系统会自动整合所有数据示分布情况。
+                    💡 使用提示：现在可以通过调整窗口大小，获得最佳的图表显示效果。
                 </p>
                 <p style='margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem; font-style: italic; 
                     padding: 0.5rem; background: #F8F9FA; border-radius: 4px;'>
-                    "希望能够同时分析多个文件的数据，这样可以更好地进行整体分析"
+                    "数据展示更加直观了，分析效率提高了很多！"
                 </p>
             </div>
         </div>
@@ -610,7 +627,7 @@ def main():
                     
                     # 数据统计
                     st.metric("总评论数", total_comments)
-                    st.metric("��评数", low_score_comments)
+                    st.metric("差评数", low_score_comments)
                     
                     # 在进入标签页之前，先初始化所有计数器
                     # 词频统计
@@ -705,7 +722,7 @@ def main():
                                                 x=1
                                             ),
                                             # 调整饼图大小
-                                            autosize=True,  # 自动调整大小
+                                            autosize=True,  # 自动调整���小
                                             height=300,  # 固定高度
                                         )
                                         # 调整饼图样式
@@ -744,7 +761,7 @@ def main():
                                         height=400  # 固定高度
                                     )
                                     fig.update_layout(
-                                        margin=dict(l=20, r=20, t=20, b=80),  # 增加底部边距，为倾斜的标签留出空间
+                                        margin=dict(l=20, r=20, t=20, b=80),  # 增加底部边距，为倾斜的标签��出空间
                                         xaxis_tickangle=-45,  # 标签倾斜角度
                                         xaxis=dict(
                                             tickmode='array',
