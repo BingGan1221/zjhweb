@@ -1,6 +1,7 @@
 # 标准库导入
 import sys
 import logging
+import html
 from pathlib import Path
 from collections import Counter
 
@@ -55,6 +56,7 @@ NEGATIVE_WORDS = {
 
 # 在文件开头添加版本常量
 VERSION = "2.0.0"  # 更新版本号
+CHART_COLORS = ['#153f36', '#d88b2d', '#337b87', '#c8503e', '#547a44', '#8a6f3a']
 
 # 在文件开头，USER_STOP_WORDS 定义后添加
 if 'user_stop_words' not in st.session_state:
@@ -63,84 +65,381 @@ if 'user_stop_words' not in st.session_state:
 # 在文件开头添加自定义样式
 st.markdown("""
 <style>
-    /* 输入框样式 */
-    .stTextInput input {
-        border: 2px solid #2E86C1 !important;
-        border-radius: 8px !important;
-        padding: 10px 15px !important;
-        background-color: white !important;
-        color: #333 !important;
-        font-size: 0.9rem !important;
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+
+    :root {
+        --ink: #17201b;
+        --muted: #68756f;
+        --paper: #fbf7ed;
+        --panel: rgba(255, 252, 244, 0.92);
+        --panel-strong: #fffdf6;
+        --line: rgba(39, 52, 44, 0.14);
+        --pine: #153f36;
+        --moss: #547a44;
+        --amber: #d88b2d;
+        --coral: #c8503e;
+        --sky: #337b87;
+        --shadow: 0 18px 50px rgba(23, 32, 27, 0.10);
+        --soft-shadow: 0 8px 24px rgba(23, 32, 27, 0.07);
+        --radius: 8px;
     }
-    .stTextInput input:focus {
-        box-shadow: 0 0 0 2px rgba(46,134,193,0.2) !important;
-        border-color: #2E86C1 !important;
+
+    html, body, [data-testid="stAppViewContainer"] {
+        color: var(--ink);
+        font-family: 'Noto Sans SC', sans-serif !important;
+        background:
+            radial-gradient(circle at 12% 10%, rgba(216, 139, 45, 0.16), transparent 30%),
+            radial-gradient(circle at 88% 6%, rgba(51, 123, 135, 0.13), transparent 28%),
+            linear-gradient(135deg, #fbf7ed 0%, #f3ead9 48%, #edf3ea 100%) !important;
     }
-    
-    /* 文本区域样式 */
-    .stTextArea textarea {
-        border: 2px solid #2E86C1 !important;
-        border-radius: 8px !important;
-        padding: 10px 15px !important;
-        background-color: white !important;
-        color: #333 !important;
-        font-size: 0.9rem !important;
+
+    .stApp::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.22;
+        background-image:
+            linear-gradient(rgba(23, 32, 27, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(23, 32, 27, 0.06) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: linear-gradient(to bottom, black, transparent 75%);
     }
-    .stTextArea textarea:focus {
-        box-shadow: 0 0 0 2px rgba(46,134,193,0.2) !important;
-        border-color: #2E86C1 !important;
+
+    .main .block-container {
+        max-width: 1320px;
+        padding: 2rem 2rem 4rem;
+        position: relative;
+        z-index: 1;
     }
-    
-    /* 多选框样式 */
-    .stMultiSelect {
-        background-color: white !important;
-        border: 2px solid #2E86C1 !important;
-        border-radius: 8px !important;
-        padding: 2px !important;
+
+    h1, h2, h3 {
+        letter-spacing: 0 !important;
     }
-    .stMultiSelect:hover {
-        border-color: #2E86C1 !important;
-    }
-    
-    /* 按钮样式 */
-    .stButton button {
-        background-color: #2E86C1 !important;
-        color: white !important;
-        border: none !important;
-        padding: 0.5rem 1rem !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-        transition: all 0.3s ease !important;
-    }
-    .stButton button:hover {
-        background-color: #2874A6 !important;
-        box-shadow: 0 2px 6px rgba(46,134,193,0.3) !important;
-    }
-    
-    /* 标签样式 */
-    .stSelectbox label, .stMultiSelect label, .stTextInput label {
-        color: #2E86C1 !important;
-        font-weight: 500 !important;
-        font-size: 0.95rem !important;
-        margin-bottom: 0.3rem !important;
-    }
-    
-    /* 下拉框样式 */
+
+    .stTextInput input,
+    .stTextArea textarea,
     .stSelectbox select {
-        border: 2px solid #2E86C1 !important;
-        border-radius: 8px !important;
-        padding: 10px 15px !important;
-        background-color: white !important;
-        color: #333 !important;
+        border: 1px solid var(--line) !important;
+        border-radius: var(--radius) !important;
+        padding: 0.75rem 0.9rem !important;
+        background-color: rgba(255, 253, 246, 0.98) !important;
+        color: var(--ink) !important;
+        font-size: 0.94rem !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+    }
+
+    .stTextInput input:focus,
+    .stTextArea textarea:focus {
+        border-color: var(--amber) !important;
+        box-shadow: 0 0 0 3px rgba(216, 139, 45, 0.16) !important;
+    }
+
+    .stMultiSelect [data-baseweb="select"] > div {
+        background-color: rgba(255, 253, 246, 0.98) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: var(--radius) !important;
+        min-height: 46px !important;
+    }
+
+    .stSelectbox label,
+    .stMultiSelect label,
+    .stTextInput label,
+    .stTextArea label {
+        color: var(--pine) !important;
+        font-weight: 700 !important;
         font-size: 0.9rem !important;
     }
-    
-    /* 帮助文本样式 */
-    .stMarkdown div.help-text {
-        color: #666 !important;
-        font-size: 0.85rem !important;
-        margin-top: 0.2rem !important;
-        font-style: italic !important;
+
+    .stButton button {
+        background: var(--pine) !important;
+        color: #fffdf6 !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        padding: 0.62rem 1.1rem !important;
+        border-radius: var(--radius) !important;
+        font-weight: 800 !important;
+        box-shadow: var(--soft-shadow) !important;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
+    }
+
+    .stButton button:hover {
+        background: #1d5448 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px rgba(21, 63, 54, 0.18) !important;
+    }
+
+    [data-testid="stMetric"] {
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1rem 1.1rem;
+        box-shadow: var(--soft-shadow);
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: var(--pine);
+        font-family: 'Fraunces', 'Noto Sans SC', serif;
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    [data-testid="stFileUploader"] {
+        background: var(--panel);
+        border: 1px dashed rgba(21, 63, 54, 0.34);
+        border-radius: var(--radius);
+        padding: 1rem;
+        box-shadow: var(--soft-shadow);
+    }
+
+    .streamlit-expanderHeader {
+        background: rgba(255, 253, 246, 0.9) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: var(--radius) !important;
+        color: var(--pine) !important;
+        font-weight: 800 !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem !important;
+        padding: 0.4rem !important;
+        background: rgba(21, 63, 54, 0.08) !important;
+        border: 1px solid rgba(21, 63, 54, 0.12) !important;
+        border-radius: var(--radius) !important;
+        margin-bottom: 1.25rem !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 44px !important;
+        padding: 0 1rem !important;
+        border-radius: 6px !important;
+        color: var(--pine) !important;
+        font-weight: 800 !important;
+        background: transparent !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: var(--panel-strong) !important;
+        color: var(--coral) !important;
+        box-shadow: 0 6px 18px rgba(23, 32, 27, 0.08) !important;
+    }
+
+    .workspace-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius);
+        padding: 2.1rem;
+        margin-bottom: 1.25rem;
+        color: #fffdf6;
+        background:
+            linear-gradient(120deg, rgba(21, 63, 54, 0.96), rgba(38, 82, 62, 0.92)),
+            repeating-linear-gradient(135deg, transparent 0, transparent 16px, rgba(255,255,255,0.06) 16px, rgba(255,255,255,0.06) 17px);
+        box-shadow: var(--shadow);
+    }
+
+    .workspace-hero::after {
+        content: "";
+        position: absolute;
+        right: -8rem;
+        top: -8rem;
+        width: 22rem;
+        height: 22rem;
+        border: 1px solid rgba(255, 253, 246, 0.22);
+        transform: rotate(18deg);
+    }
+
+    .hero-kicker {
+        color: rgba(255, 253, 246, 0.76);
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }
+
+    .hero-title {
+        font-family: 'Fraunces', 'Noto Sans SC', serif;
+        font-size: clamp(2.2rem, 5vw, 4.7rem);
+        line-height: 0.95;
+        font-weight: 800;
+        margin: 0;
+        max-width: 760px;
+    }
+
+    .hero-copy {
+        max-width: 680px;
+        margin: 1rem 0 0;
+        color: rgba(255, 253, 246, 0.82);
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .hero-meta {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        margin-top: 1.4rem;
+    }
+
+    .hero-pill {
+        border: 1px solid rgba(255, 253, 246, 0.22);
+        background: rgba(255, 253, 246, 0.10);
+        border-radius: 999px;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .step-card,
+    .notice-card,
+    .control-card,
+    .comment-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--soft-shadow);
+    }
+
+    .step-card {
+        padding: 1rem;
+        border-top: 4px solid var(--amber);
+    }
+
+    .step-card strong {
+        display: block;
+        color: var(--pine);
+        margin-bottom: 0.28rem;
+        font-size: 0.98rem;
+    }
+
+    .step-card span {
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.55;
+    }
+
+    .notice-card {
+        padding: 1.1rem 1.2rem;
+        margin-bottom: 1.25rem;
+        border-left: 5px solid var(--sky);
+    }
+
+    .notice-card h4 {
+        margin: 0 0 0.35rem;
+        color: var(--pine);
+        font-size: 1.02rem;
+    }
+
+    .notice-card p {
+        color: var(--muted);
+        margin: 0;
+        line-height: 1.65;
+        font-size: 0.92rem;
+    }
+
+    .designer-mark {
+        color: var(--muted);
+        text-align: right;
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin: 0.5rem 0 1.1rem;
+    }
+
+    .filter-box {
+        background: rgba(255, 253, 246, 0.94);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--soft-shadow);
+        padding: 1rem;
+        margin: 1rem 0 1.25rem;
+    }
+
+    .filter-title {
+        color: var(--pine);
+        font-weight: 900;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .filter-item,
+    .control-card {
+        padding: 1rem;
+    }
+
+    .file-summary {
+        background: rgba(84, 122, 68, 0.08);
+        border: 1px solid rgba(84, 122, 68, 0.16);
+        border-radius: var(--radius);
+        padding: 0.85rem;
+        margin-bottom: 1rem;
+        color: var(--pine);
+        line-height: 1.55;
+    }
+
+    .comment-card {
+        padding: 1rem;
+        margin-bottom: 0.85rem;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .comment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .comment-text {
+        color: var(--ink);
+        line-height: 1.7;
+        font-size: 0.94rem;
+    }
+
+    .comment-source {
+        margin-top: 0.75rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-align: right;
+        font-weight: 700;
+    }
+
+    .highlight {
+        color: var(--coral);
+        background: rgba(216, 139, 45, 0.16);
+        border: 1px solid rgba(216, 139, 45, 0.22);
+        border-radius: 4px;
+        padding: 0 0.2rem;
+        font-weight: 900;
+    }
+
+    @media (max-width: 820px) {
+        .main .block-container {
+            padding: 1rem 0.8rem 3rem;
+        }
+
+        .workspace-hero {
+            padding: 1.35rem;
+        }
+
+        .steps-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -188,13 +487,45 @@ def ensure_font():
 
 def highlight_words(text, selected_word, source=None):
     """高亮显示选中的关键词，并添加来源标注"""
-    highlighted_text = text.replace(
-        selected_word, 
-        f'<span style="color: red; font-weight: bold;">{selected_word}</span>'
+    safe_text = html.escape(str(text))
+    safe_word = html.escape(str(selected_word))
+    highlighted_text = safe_text.replace(
+        safe_word,
+        f'<span class="highlight">{safe_word}</span>'
     )
     if source:
-        highlighted_text += f'<div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">来源: {source}</div>'
+        highlighted_text += f'<div class="comment-source">来源: {html.escape(str(source))}</div>'
     return highlighted_text
+
+def render_comment_card(comment, selected_word, source):
+    """渲染统一风格的评论卡片"""
+    st.markdown(
+        f"""
+        <div class="comment-card">
+            <div class="comment-text">{highlight_words(comment, selected_word)}</div>
+            <div class="comment-source">来源: {html.escape(str(source))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+def style_bar_chart(fig, color='#153f36'):
+    """统一 Plotly 柱状图视觉语言"""
+    fig.update_layout(
+        plot_bgcolor='rgba(255,253,246,0.7)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#17201b', family='Noto Sans SC'),
+        showlegend=False
+    )
+    fig.update_traces(
+        marker_color=color,
+        marker_line_color='rgba(23,32,27,0.28)',
+        marker_line_width=1,
+        opacity=0.9
+    )
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(23,32,27,0.10)')
+    fig.update_xaxes(showgrid=False)
+    return fig
 
 def get_most_complete_comment(comments):
     """从相似评论中选择最完整的一条"""
@@ -211,233 +542,44 @@ def get_most_complete_comment(comments):
 # UI组件函数
 def render_header():
     """渲染页面标题和说明"""
-    # 添加全局样式和羊的背景
-    st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to bottom, #F8F9F9, #FFFFFF);
-        }
-        
-        /* 羊背景样式 */
-        .sheep-bg {
-            position: fixed;
-            font-size: var(--size);
-            opacity: 0.05;
-            transform: rotate(var(--rotate));
-            z-index: -999;
-            pointer-events: none;
-        }
-        
-        /* 标签页按钮样式 */
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 30px;
-            padding: 1rem;
-            background-color: #F5F7FA;
-            border-radius: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-            margin-bottom: 2rem;
-        }
-        
-        .stTabs [data-baseweb="tab"] {
-            height: 60px;
-            padding: 0 30px;
-            background-color: white;
-            border-radius: 12px;
-            color: #1976D2;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .stTabs [data-baseweb="tab"]:hover {
-            background-color: #E3F2FD;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #1976D2, #2196F3) !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(25,118,210,0.3) !important;
-        }
-        
-        /* 确保内容区域在最上层 */
-        .main .block-container {
-            position: relative;
-            z-index: 99;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 1rem;
-            border-radius: 10px;
-        }
-        
-        /* 确保所有组件在最上层 */
-        .stButton, .stSelectbox, .stFileUploader, .stTabs, 
-        .stMarkdown, .stMetric, .element-container {
-            position: relative;
-            z-index: 100;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # 生成羊的背景
-    sheep_styles = []
-    rows, cols = 6, 8
-    for row in range(rows):
-        for col in range(cols):
-            left = (col * 100 / cols) + np.random.randint(-15, 15)
-            top = (row * 100 / rows) + np.random.randint(-15, 15)
-            size = np.random.randint(20, 40)
-            rotate = np.random.randint(-45, 45)
-            
-            sheep_styles.append(
-                f"left: {left}%; top: {top}%; "
-                f"font-size: {size}px; "
-                f"transform: rotate({rotate}deg);"
-            )
-    
-    sheep_divs = '\n'.join([
-        f'<div class="sheep-bg" style="{style}">🐑</div>'
-        for style in sheep_styles
-    ])
-    
-    # 添加背景羊
     st.markdown(f"""
-    <div style="position: fixed; width: 100%; height: 100%; z-index: -999; pointer-events: none;">
-        {sheep_divs}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 添加版本信息到标题区域
-    st.markdown("""
-    <div style='text-align: right; margin-bottom: 1rem;'>
-        <span style='background: rgba(46, 134, 193, 0.1); 
-                     padding: 0.3rem 0.8rem; 
-                     border-radius: 15px; 
-                     font-size: 0.8rem; 
-                     color: #2E86C1;'>
-             v""" + VERSION + """
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 渲染标题
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #2E86C1, #3498DB); 
-         padding: 2rem; border-radius: 15px; margin-bottom: 2rem; 
-         box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;'>
-        <h1 style='color: white; margin-bottom: 0.5rem; font-size: 2.5rem;'>
-            📊 Excel评论分析工具
-        </h1>
-        <p style='color: rgba(255,255,255,0.9); font-size: 1.1rem;'>
-            快速分析和可视化您的评论数据
+    <div class="designer-mark">v{VERSION} · Designed with 🐑 @小羊</div>
+    <section class="workspace-hero">
+        <div class="hero-kicker">Comment Intelligence Workspace</div>
+        <h1 class="hero-title">Excel 评论分析工具</h1>
+        <p class="hero-copy">
+            面向运营复盘的评论分析工作台。上传评论表后，快速合并多文件、定位差评线索、抽取建议关键词，并把高频反馈变成可读的图表和词云。
         </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 渲染使用说明
-    st.markdown("""
-    <div style='background-color: #EBF5FB; padding: 1rem; border-radius: 8px; 
-         margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05);'>
-        <div style='display: flex; gap: 1rem; flex-wrap: wrap;'>
-            <div style='background: white; padding: 0.8rem 1rem; border-radius: 6px; 
-                 border-left: 3px solid #2E86C1; flex: 1; min-width: 200px;'>
-                <p style='margin: 0; color: #2E86C1;'>📤 上传Excel文件</p>
-            </div>
-            <div style='background: white; padding: 0.8rem 1rem; border-radius: 6px; 
-                 border-left: 3px solid #2E86C1; flex: 1; min-width: 200px;'>
-                <p style='margin: 0; color: #2E86C1;'>🔍 选择筛选条件</p>
-            </div>
-            <div style='background: white; padding: 0.8rem 1rem; border-radius: 6px; 
-                 border-left: 3px solid #2E86C1; flex: 1; min-width: 200px;'>
-                <p style='margin: 0; color: #2E86C1;'>📊 查看分析结果</p>
-            </div>
+        <div class="hero-meta">
+            <span class="hero-pill">多文件合并</span>
+            <span class="hero-pill">差评定位</span>
+            <span class="hero-pill">建议词识别</span>
+            <span class="hero-pill">词云可视化</span>
+        </div>
+    </section>
+    <div class="steps-grid">
+        <div class="step-card">
+            <strong>上传 Excel</strong>
+            <span>支持一次选择多个文件，并自动保留来源，方便横向比较。</span>
+        </div>
+        <div class="step-card">
+            <strong>筛选评论</strong>
+            <span>按文件、关键词、建议类型或负面情绪快速收窄样本。</span>
+        </div>
+        <div class="step-card">
+            <strong>查看洞察</strong>
+            <span>在总体、差评、建议、负面四个视角里追踪真实反馈。</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
-    
-    # 在 render_header 函��中，使用说添加系统公告
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #EBF5FB, #D6EAF8); padding: 1rem; border-radius: 8px; 
-         margin-bottom: 1.5rem; border: 1px solid #2E86C1;'>
-        <h4 style='color: #2E86C1; margin-bottom: 0.8rem; font-size: 1rem; display: flex; align-items: center;'>
-            <span style='margin-right: 0.5rem;'>📢</span> 系统更新公告 v2.2.0
-        </h4>
-        <div style='color: #2E86C1; font-size: 0.9rem; line-height: 1.5;'>
-            <p style='margin: 0 0 0.5rem 0;'>更新内容：</p>
-            <ul style='margin: 0 0 1rem 1.5rem;'>
-                <li>📊 优化数据可视化效果
-                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
-                        <li>改进饼图和柱状图的显示比例</li>
-                        <li>优化词云图的展示效果</li>
-                    </ul>
-                </li>
-                <li>🎨 全新界面设计
-                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
-                        <li>重新设计控制面板布局</li>
-                        <li>优化评论展示样式</li>
-                    </ul>
-                </li>
-                <li>⚡️ 性能优化
-                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
-                        <li>提升多文件处理速度</li>
-                        <li>优化内存使用效率</li>
-                    </ul>
-                </li>
-                <li>🔍 交互体验提升
-                    <ul style='margin: 0.3rem 0 0.3rem 1rem; color: #3498DB;'>
-                        <li>改进筛选条件的响应速度</li>
-                        <li>优化评论高亮显示效果</li>
-                    </ul>
-                </li>
-            </ul>
-            <div style='background: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem;'>
-                <p style='margin: 0; color: #2E86C1;'>
-                    💡 使用提示：现在可以通过调整窗口大小，获得最佳的图表显示效果。
-                </p>
-                <p style='margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem; font-style: italic; 
-                    padding: 0.5rem; background: #F8F9FA; border-radius: 4px;'>
-                    "数据展示更加直观了，分析效率提高了很多！"
-                </p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 文件上传区域美化
-    st.markdown("""
-    <div style='background-color: #F8F9FA; padding: 2rem; border-radius: 10px; border: 2px dashed #1E88E5; text-align: center; margin-bottom: 2rem;'>
-    """, unsafe_allow_html=True)
-    
-    # 添加设计者标识
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("""
-    <div style='text-align: center; padding: 2rem; margin-top: 2rem; background: linear-gradient(to right, #F8F9FA, #FFFFFF, #F8F9FA);'>
-        <p style='color: #757575; font-size: 0.9rem; margin: 0;'>
-            🎨 Designed with 🐑 @小羊
-        </p>
+    <div class="notice-card">
+        <h4>系统更新公告 v2.2.0</h4>
+        <p>本版重点优化图表阅读、筛选控制和评论卡片层级，让高频词、文件来源和具体原文之间的跳转更直接。</p>
     </div>
     """, unsafe_allow_html=True)
 
 # 主函数
 def main():
-    # 添加一个容器来包裹版本信息
-    with st.container():
-        col1, col2 = st.columns([3, 1])
-        with col2:
-            st.markdown(
-                f"""
-                <div style='background: white; padding: 0.5rem; border-radius: 5px; 
-                     border: 1px solid #E0E0E0; margin-bottom: 1rem; text-align: right;
-                     font-size: 0.8rem; color: #666;'>
-                    Python 版本: {sys.version.split()[0]}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            logger.info(f"Python 版本: {sys.version}")
+    logger.info(f"Python 版本: {sys.version}")
     
     # 渲染页面主要内容
     render_header()
@@ -450,55 +592,10 @@ def main():
     )
     
     if uploaded_files:
-        # 添加筛选框样式
-        st.markdown("""
-        <style>
-            /* 筛选框容器 */
-            .filter-box {
-                background-color: #EBF5FB;
-                padding: 1.2rem;
-                border-radius: 12px;
-                border: 2px solid #2E86C1;
-                box-shadow: 0 2px 8px rgba(46,134,193,0.15);
-                margin-bottom: 2rem;
-                position: sticky;
-                top: 3rem;
-                z-index: 1000;
-            }
-            
-            /* 筛选条格布局 */
-            .filter-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 1rem;
-                margin-top: 0.8rem;
-            }
-            
-            /* 筛选条件项样式 */
-            .filter-item {
-                background-color: white;
-                padding: 0.8rem;
-                border-radius: 8px;
-                border: 1px solid #E0E0E0;
-            }
-            
-            /* 筛选框标题 */
-            .filter-title {
-                color: #2E86C1;
-                font-size: 1.1rem;
-                font-weight: 600;
-                margin-bottom: 0.8rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 2px solid #2E86C1;
-            }
-        </style>
-        """, unsafe_allow_html=True)
-        
         # 创建筛选框
         st.markdown("""
         <div class="filter-box">
-            <div class="filter-title">🔍 筛选条件</div>
-            <div class="filter-grid">
+            <div class="filter-title">筛选条件</div>
         """, unsafe_allow_html=True)
         
         # 使用列布局来组织筛选条件
@@ -513,6 +610,8 @@ def main():
                 help="可以选择多个文件进行合并分析"
             )
             st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if selected_files:
             try:
@@ -526,18 +625,16 @@ def main():
                 with control_col:
                     # 控制面板容器
                     st.markdown("""
-                    <div style='background-color: #F8F9FA; padding: 1rem; border-radius: 8px; 
-                         border: 1px solid #E0E0E0; height: 100%;'>
-                        <h4 style='color: #2E86C1; margin-bottom: 1rem; font-size: 1rem;'>🎮 控制面板</h4>
+                    <div class="control-card">
+                        <strong>控制面板</strong>
+                        <p style="margin: 0.35rem 0 0; color: var(--muted); font-size: 0.88rem;">调整筛选口径并管理停用词。</p>
+                    </div>
                     """, unsafe_allow_html=True)
                     
                     # 文件信息
                     st.markdown(f"""
-                    <div style='background-color: white; padding: 0.8rem; border-radius: 6px; 
-                         margin-bottom: 1rem; border: 1px solid #E0E0E0;'>
-                        <p style='margin: 0; font-size: 0.9rem;'>
-                            📄 分析文件：<br><strong>{', '.join(f.name for f in selected_files)}</strong>
-                        </p>
+                    <div class="file-summary">
+                        分析文件<br><strong>{html.escape(', '.join(f.name for f in selected_files))}</strong>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -735,7 +832,7 @@ def main():
                                             hole=0.3,  # 添加环形效果
                                             pull=[0.05] * len(source_counts),  # 轻微分离扇形
                                             marker=dict(
-                                                colors=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'],  # 自定义颜色
+                                                colors=CHART_COLORS,
                                                 line=dict(color='white', width=2)  # 添加白色边框
                                             )
                                         )
@@ -783,26 +880,13 @@ def main():
                                         plot_bgcolor='white',  # 设置背景色为白色
                                         showlegend=False
                                     )
-                                    fig.update_traces(
-                                        marker_color='#2E86C1',  # 设置柱子颜色
-                                        marker_line_color='#2874A6',  # 设置柱子边框颜色
-                                        marker_line_width=1,  # 设置柱子边框宽度
-                                        opacity=0.8  # 设置透明度
-                                    )
-                                    fig.update_yaxes(
-                                        showgrid=True,
-                                        gridwidth=1,
-                                        gridcolor='rgba(211,211,211,0.3)'  # 淡灰色网格线
-                                    )
+                                    style_bar_chart(fig, CHART_COLORS[0])
                                     st.plotly_chart(fig, use_container_width=True, config={
                                         'displayModeBar': False  # 隐藏plotly工具栏
                                     })
                                     
                                     # 第三行：评论详情
-                                    st.markdown("""
-                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💬 评论详情</h3>
-                                    """, unsafe_allow_html=True)
+                                    st.subheader("💬 评论详情")
                                     
                                     selected_word = st.selectbox(
                                         "选择关键词查看相关评论",
@@ -823,21 +907,7 @@ def main():
                                         cols = st.columns(2)
                                         for i, (comment, source) in enumerate(unique_comments):
                                             with cols[i % 2]:
-                                                st.markdown(
-                                                    f"""
-                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
-                                                        <div style="color: #333;">{comment.replace(selected_word, 
-                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
-                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
-                                                            来源: {source}
-                                                        </div>
-                                                    </div>
-                                                    """,
-                                                    unsafe_allow_html=True
-                                                )
-                                    
-                                    st.markdown("</div>", unsafe_allow_html=True)
+                                                render_comment_card(comment, selected_word, source)
                             else:
                                 st.info("没有找到有效的评论数据")
 
@@ -873,13 +943,11 @@ def main():
                                             margin=dict(l=20, r=20, t=20, b=20),
                                             xaxis_tickangle=-45
                                         )
+                                        style_bar_chart(fig, CHART_COLORS[3])
                                         st.plotly_chart(fig, use_container_width=True)
                                     
                                     # 第二行：差评详情
-                                    st.markdown("""
-                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💬 差评详情</h3>
-                                    """, unsafe_allow_html=True)
+                                    st.subheader("💬 差评详情")
                                     
                                     selected_word = st.selectbox(
                                         "选择关键词查看相关差评",
@@ -900,21 +968,7 @@ def main():
                                         
                                         for i, (comment, source) in enumerate(unique_comments):
                                             with cols[i % 2]:
-                                                st.markdown(
-                                                    f"""
-                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
-                                                        <div style="color: #333;">{comment.replace(selected_word, 
-                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
-                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
-                                                            来源: {source}
-                                                        </div>
-                                                    </div>
-                                                    """,
-                                                    unsafe_allow_html=True
-                                                )
-                                    
-                                    st.markdown("</div>", unsafe_allow_html=True)
+                                                render_comment_card(comment, selected_word, source)
                             else:
                                 st.info("没有找到差评数据")
 
@@ -935,13 +989,11 @@ def main():
                                         margin=dict(l=20, r=20, t=20, b=20),
                                         xaxis_tickangle=-45
                                     )
+                                    style_bar_chart(fig, CHART_COLORS[1])
                                     st.plotly_chart(fig, use_container_width=True)
                                     
                                     # 第二行：建议详情
-                                    st.markdown("""
-                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">💡 建议详情</h3>
-                                    """, unsafe_allow_html=True)
+                                    st.subheader("💡 建议详情")
                                     
                                     selected_word = st.selectbox(
                                         "选择关键词查看相关建议",
@@ -961,21 +1013,7 @@ def main():
                                         
                                         for i, (comment, source) in enumerate(unique_comments):
                                             with cols[i % 2]:
-                                                st.markdown(
-                                                    f"""
-                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
-                                                        <div style="color: #333;">{comment.replace(selected_word, 
-                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
-                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
-                                                            来源: {source}
-                                                        </div>
-                                                    </div>
-                                                    """,
-                                                    unsafe_allow_html=True
-                                                )
-                                    
-                                    st.markdown("</div>", unsafe_allow_html=True)
+                                                render_comment_card(comment, selected_word, source)
                             else:
                                 st.info("没有找到建议相关的评论")
 
@@ -1010,13 +1048,11 @@ def main():
                                             margin=dict(l=20, r=20, t=20, b=20),
                                             xaxis_tickangle=-45
                                         )
+                                        style_bar_chart(fig, CHART_COLORS[3])
                                         st.plotly_chart(fig, use_container_width=True)
                                     
                                     # 第二行：负面评论详情
-                                    st.markdown("""
-                                    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                                        <h3 style="color: #2E86C1; font-size: 1.2rem; margin-bottom: 1rem;">😟 负面评论详情</h3>
-                                    """, unsafe_allow_html=True)
+                                    st.subheader("😟 负面评论详情")
                                     
                                     selected_word = st.selectbox(
                                         "选择关键词查看相关负面评论",
@@ -1036,21 +1072,7 @@ def main():
                                         
                                         for i, (comment, source) in enumerate(unique_comments):
                                             with cols[i % 2]:
-                                                st.markdown(
-                                                    f"""
-                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; 
-                                                         margin-bottom: 0.8rem; border: 1px solid #E0E0E0; height: 100%;">
-                                                        <div style="color: #333;">{comment.replace(selected_word, 
-                                                            f'<span style="color: red; font-weight: bold;">{selected_word}</span>')}</div>
-                                                        <div style="text-align: right; color: #666666; font-size: 0.8em; margin-top: 0.3em;">
-                                                            来源: {source}
-                                                        </div>
-                                                    </div>
-                                                    """,
-                                                    unsafe_allow_html=True
-                                                )
-                                    
-                                    st.markdown("</div>", unsafe_allow_html=True)
+                                                render_comment_card(comment, selected_word, source)
                             else:
                                 st.info("没有找到负面情绪相关的评论")
 
