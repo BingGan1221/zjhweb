@@ -148,7 +148,7 @@ st.markdown("""
 # 工具函数
 def ensure_font():
     """确保字体文件存在并返回字体路径"""
-    font_dir = Path('fonts')
+    font_dir = Path(__file__).parent / 'fonts'
     font_path = font_dir / 'simhei.ttf'
     
     if font_path.exists():
@@ -165,12 +165,15 @@ def ensure_font():
     
     for system_font in system_fonts:
         if system_font.exists():
-            shutil.copy(system_font, font_path)
-            return str(font_path)
+            try:
+                shutil.copy(system_font, font_path)
+                return str(font_path)
+            except Exception:
+                pass
     
     # 从网络下载字体
     try:
-        font_url = "https://github.com/microsoft/Windows-Font/raw/master/SimHei.ttf"
+        font_url = "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
         response = requests.get(font_url)
         response.raise_for_status()
         
