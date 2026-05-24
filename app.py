@@ -773,8 +773,10 @@ def main():
                                             tickfont=dict(size=11)  # 调整字体大小
                                         ),
                                         yaxis=dict(
-                                            title='出现次数',
-                                            titlefont=dict(size=12),
+                                            title=dict(
+                                                text='出现次数',
+                                                font=dict(size=12)
+                                            ),
                                             tickfont=dict(size=11)
                                         ),
                                         bargap=0.2,  # 调整柱子之间的间距
